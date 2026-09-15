@@ -35,7 +35,7 @@
    script.js updates body[data-scene] on section-enter (IntersectionObserver).
    Nothing here touches playback, so there is nothing to cause the seeking
    lag the scroll-scrubbed version had. */
-body[data-scene="hero"] { --overlay-opacity: 0.38; --video-brightness: 0.72; }
+body[data-scene="hero"] { --overlay-opacity: 0.56; --video-brightness: 0.5; }
 body[data-scene="about"] { --overlay-opacity: 0.66; --video-brightness: 0.47; }
 body[data-scene="education"] { --overlay-opacity: 0.68; --video-brightness: 0.44; }
 body[data-scene="interlude"] { --overlay-opacity: 0.24; --video-brightness: 0.82; }
@@ -408,15 +408,39 @@ a {
 .hero__name-word {
   display: inline-block;
   opacity: 0;
+  /* Plain adaptive color is the baseline/fallback — browsers without
+     background-clip: text support (see below) just get this, which is
+     already a fully legible result on its own. */
   color: var(--hero-text-color, var(--text));
-  /* A thin adaptive stroke, alongside the blurred shadow above, gives each
-     letter a hard edge — the blur alone reads as a soft glow, which isn't
-     enough when a letter sits directly over linework close to its own
-     tone (see initAdaptiveHeroContrast in script.js). */
-  -webkit-text-stroke: 0.5px var(--hero-text-stroke, transparent);
+  /* A thin adaptive stroke, alongside the shadow above, gives each letter
+     a hard edge — necessary against something as large and evenly bright
+     as, say, a full moon filling the frame, where a blurred shadow alone
+     thins out (see initAdaptiveHeroContrast in script.js). */
+  -webkit-text-stroke: 0.65px var(--hero-text-stroke, transparent);
   animation: heroReveal 0.8s var(--ease) forwards;
   animation-delay: calc(0.25s + var(--i) * 0.15s);
   transition: color 0.6s linear;
+}
+
+/* A subtle two-stop gradient fill on the name — the flat adaptive color
+   read as plain, so this deepens slightly across the letters instead,
+   using the same dark/light colors already driving everything else (see
+   --hero-text-color-deep in initAdaptiveHeroContrast, script.js) rather
+   than an unrelated hue. Gated behind @supports so the plain color above
+   remains a fully legible fallback where background-clip: text isn't
+   available, instead of invisible transparent text. */
+@supports (background-clip: text) or (-webkit-background-clip: text) {
+  .hero__name-word {
+    background-image: linear-gradient(
+      100deg,
+      var(--hero-text-color, var(--text)) 15%,
+      var(--hero-text-color-deep, var(--hero-text-color, var(--text))) 100%
+    );
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+  }
 }
 
 .hero__tagline {
@@ -426,8 +450,8 @@ a {
   margin: 0 0 2.5rem;
   line-height: 1.6;
   text-shadow: var(--hero-text-shadow-secondary, 0 2px 24px rgba(5, 7, 13, 0.6));
-  -webkit-text-stroke: 0.4px var(--hero-text-stroke, transparent);
-  transition: color 0.6s ease-out, text-shadow 0.6s ease-out;
+  -webkit-text-stroke: 0.55px var(--hero-text-stroke, transparent);
+  transition: color 0.6s linear, text-shadow 0.6s linear;
 }
 
 .hero__cta {
