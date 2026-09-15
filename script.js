@@ -229,6 +229,131 @@ const playResult = video.play();
 if (playResult && playResult.catch) playResult.catch(() => {});
 
 // ---------------------------------------------------------------------------
+// Adaptive hero text contrast — the hero name/tagline gradually shift
+// between an icy-white and a deep-navy rendering as the video plays behind
+// them, so the text stays readable whether that moment of the scene is dark
+// or bright. This never touches playback (no currentTime, no seeking); it
+// only *reads* the current frame to estimate brightness.
+//
+// Method: draw the video into a tiny (32×18) offscreen canvas — cheap
+// regardless of the video's real resolution — then average the luminance
+// of just the sub-region roughly behind the hero text (left/upper-middle
+// of frame). That raw sample is noisy frame-to-frame, so it's smoothed
+// with an exponential moving average before being mapped to a color; the
+// CSS `transition` on the affected properties smooths it a second time,
+// so the result eases continuously rather than snapping or flickering.
+// Sampling is throttled to ~7.5/sec (setInterval, not rAF) and skipped
+// entirely whenever the hero isn't the active scene.
+// ---------------------------------------------------------------------------
+
+(function initAdaptiveHeroContrast() {
+  const canvas = document.createElement("canvas");
+  const SAMPLE_W = 32;
+  const SAMPLE_H = 18;
+  canvas.width = SAMPLE_W;
+  canvas.height = SAMPLE_H;
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
+  if (!ctx) return;
+
+  // Crop within the tiny canvas approximating where the hero name/tagline
+  // actually sit: left ~45% of frame, roughly the vertical band the text
+  // occupies (not the sky/hair above or below it).
+  const cropX = 0;
+  const cropY = Math.round(SAMPLE_H * 0.32);
+  const cropW = Math.round(SAMPLE_W * 0.46);
+  const cropH = Math.round(SAMPLE_H * 0.38);
+
+  // Endpoints straight from the brief: warm/icy white on a dark scene,
+  // deep navy on a bright one. The secondary pair is a touch more muted,
+  // keeping the tagline visually subordinate to the name.
+  const TEXT_DARK_SCENE = [243, 245, 247];
+  const TEXT_BRIGHT_SCENE = [15, 28, 50];
+  const SECONDARY_DARK_SCENE = [205, 214, 227];
+  const SECONDARY_BRIGHT_SCENE = [32, 43, 64];
+
+  let smoothed = 0.35; // assume a mid-dark scene before the first real sample
+  const SMOOTHING = 0.18; // exponential moving average factor per tick
+
+  function lerp(a, b, t) {
+    return Math.round(a + (b - a) * t);
+  }
+
+  // A straight linear map spends real time producing a muddy mid-gray
+  // whenever the sampled region is a mix of bright and dark content at
+  // once (very common — a video frame rarely reads as one flat tone) —
+  // and a mid-gray is often the worst-contrast color against either a
+  // light or dark backdrop, which is exactly what must never happen here.
+  // This steepens the response so it resolves toward a clearly-light or
+  // clearly-dark result as soon as the input leans even slightly off
+  // center, while still passing through every intermediate value
+  // continuously as the (already-smoothed) luminance changes — no jump,
+  // just a steeper curve.
+  function steepen(t) {
+    const x = t * 2 - 1; // -1..1
+    const y = Math.sign(x) * Math.pow(Math.abs(x), 0.45);
+    return (y + 1) / 2;
+  }
+
+  function sampleAndApply() {
+    if (document.body.dataset.scene !== "hero") return;
+    if (video.readyState < 2) return;
+
+    try {
+      ctx.drawImage(video, 0, 0, SAMPLE_W, SAMPLE_H);
+      const { data } = ctx.getImageData(cropX, cropY, cropW, cropH);
+      let total = 0;
+      const pixelCount = data.length / 4;
+      for (let i = 0; i < data.length; i += 4) {
+        total += data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114;
+      }
+      const raw = total / pixelCount / 255; // 0 (black) .. 1 (white)
+      smoothed += (raw - smoothed) * SMOOTHING;
+    } catch (err) {
+      // Canvas readback blocked (e.g. some file:// origin quirks) — keep
+      // using the last known value rather than erroring the page.
+      return;
+    }
+
+    const rawT = Math.min(Math.max(smoothed, 0), 1);
+    const t = steepen(rawT);
+    const primary = `rgb(${lerp(TEXT_DARK_SCENE[0], TEXT_BRIGHT_SCENE[0], t)}, ${lerp(TEXT_DARK_SCENE[1], TEXT_BRIGHT_SCENE[1], t)}, ${lerp(TEXT_DARK_SCENE[2], TEXT_BRIGHT_SCENE[2], t)})`;
+    const secondary = `rgb(${lerp(SECONDARY_DARK_SCENE[0], SECONDARY_BRIGHT_SCENE[0], t)}, ${lerp(SECONDARY_DARK_SCENE[1], SECONDARY_BRIGHT_SCENE[1], t)}, ${lerp(SECONDARY_DARK_SCENE[2], SECONDARY_BRIGHT_SCENE[2], t)})`;
+
+    // Two shadow layers, always both present, just trading weight with t:
+    // a dark contact shadow (dominant on a bright scene) and a light halo
+    // (dominant on a dark scene). Neither ever drops to zero — a video
+    // frame is rarely one flat tone, so a flat text color alone can lose
+    // contrast against part of a mixed background; keeping a residual of
+    // both gives every letter some edge definition against either a light
+    // or dark patch behind it, not just against the "average" tone.
+    //
+    // `ambiguity` peaks at 1 exactly when the sampled brightness sits at
+    // the midpoint — the one case where no text color (light, dark, or
+    // anything between) is guaranteed to contrast well against the whole
+    // sampled region, since it's genuinely a mix of both. That's exactly
+    // when both shadow layers get reinforced, as extra insurance under a
+    // color choice that's necessarily a compromise there.
+    const ambiguity = 1 - Math.abs(rawT - 0.5) * 2;
+    const shadowY = lerp(0, 2, t);
+    const darkBlur = lerp(26, 16, t) + ambiguity * 6;
+    const darkAlpha = Math.min(1, 0.22 + (0.8 - 0.22) * t + ambiguity * 0.18).toFixed(2);
+    const lightBlur = lerp(10, 22, t) + ambiguity * 6;
+    const lightAlpha = Math.min(1, 0.32 - (0.32 - 0.12) * t + ambiguity * 0.18).toFixed(2);
+    const shadow = `0 ${shadowY}px ${darkBlur}px rgba(5, 7, 13, ${darkAlpha}), 0 0 ${lightBlur}px rgba(255, 255, 255, ${lightAlpha})`;
+    const secondaryShadow = `0 ${shadowY}px ${Math.round(darkBlur * 0.75)}px rgba(5, 7, 13, ${(darkAlpha * 0.9).toFixed(2)}), 0 0 ${Math.round(lightBlur * 0.75)}px rgba(255, 255, 255, ${(lightAlpha * 0.85).toFixed(2)})`;
+
+    const root = document.documentElement.style;
+    root.setProperty("--hero-text-color", primary);
+    root.setProperty("--hero-text-color-secondary", secondary);
+    root.setProperty("--hero-text-shadow", shadow);
+    root.setProperty("--hero-text-shadow-secondary", secondaryShadow);
+  }
+
+  sampleAndApply();
+  setInterval(sampleAndApply, 130); // ~7.5 samples/sec — well under one per frame
+})();
+
+// ---------------------------------------------------------------------------
 // Atmosphere — a handful of CSS-only twinkling stars. Generated once here,
 // then left entirely to CSS keyframes; no per-frame JS cost.
 // ---------------------------------------------------------------------------
