@@ -36,14 +36,14 @@
    Nothing here touches playback, so there is nothing to cause the seeking
    lag the scroll-scrubbed version had. */
 body[data-scene="hero"] { --overlay-opacity: 0.38; --video-brightness: 0.72; }
-body[data-scene="about"] { --overlay-opacity: 0.62; --video-brightness: 0.55; }
-body[data-scene="education"] { --overlay-opacity: 0.64; --video-brightness: 0.52; }
+body[data-scene="about"] { --overlay-opacity: 0.66; --video-brightness: 0.47; }
+body[data-scene="education"] { --overlay-opacity: 0.68; --video-brightness: 0.44; }
 body[data-scene="interlude"] { --overlay-opacity: 0.24; --video-brightness: 0.82; }
-body[data-scene="stack"] { --overlay-opacity: 0.72; --video-brightness: 0.48; }
-body[data-scene="projects"] { --overlay-opacity: 0.62; --video-brightness: 0.54; }
-body[data-scene="current"] { --overlay-opacity: 0.68; --video-brightness: 0.5; }
-body[data-scene="experience"] { --overlay-opacity: 0.68; --video-brightness: 0.5; }
-body[data-scene="contact"] { --overlay-opacity: 0.52; --video-brightness: 0.6; }
+body[data-scene="stack"] { --overlay-opacity: 0.76; --video-brightness: 0.4; }
+body[data-scene="projects"] { --overlay-opacity: 0.66; --video-brightness: 0.46; }
+body[data-scene="current"] { --overlay-opacity: 0.72; --video-brightness: 0.42; }
+body[data-scene="experience"] { --overlay-opacity: 0.72; --video-brightness: 0.42; }
+body[data-scene="contact"] { --overlay-opacity: 0.56; --video-brightness: 0.5; }
 
 * {
   box-sizing: border-box;
@@ -202,6 +202,7 @@ a {
   gap: clamp(1.25rem, 2vw, 2rem);
   font-size: 0.9rem;
   color: var(--text-label);
+  transition: color 0.6s linear;
 }
 
 /* While the nav is still transparent (top of the hero, before scrolling
@@ -212,7 +213,7 @@ a {
    the plain --text-label above takes back over. */
 .nav:not(.is-solid) .nav__links a {
   color: var(--hero-text-color-secondary, var(--text-label));
-  transition: color 0.6s ease-out;
+  transition: color 0.6s linear;
 }
 
 .nav__links a {
@@ -369,7 +370,7 @@ a {
      the hero, so it can use the variable directly without needing the
      :not(.is-solid) scoping the nav links need. */
   color: var(--hero-text-color-secondary, var(--text-label));
-  transition: color 0.6s ease-out;
+  transition: color 0.6s linear;
   margin: 0 0 1.5rem;
   padding: 0.4rem 0.9rem 0.4rem 0.7rem;
   border: 1px solid var(--line-strong);
@@ -415,7 +416,7 @@ a {
   -webkit-text-stroke: 0.5px var(--hero-text-stroke, transparent);
   animation: heroReveal 0.8s var(--ease) forwards;
   animation-delay: calc(0.25s + var(--i) * 0.15s);
-  transition: color 0.6s ease-out;
+  transition: color 0.6s linear;
 }
 
 .hero__tagline {
@@ -497,7 +498,7 @@ a {
   gap: 0.75rem;
   font-size: 0.8rem;
   color: var(--hero-text-color-secondary, var(--text-label));
-  transition: color 0.6s ease-out;
+  transition: color 0.6s linear;
 }
 
 .hero__scroll-line {
@@ -580,16 +581,22 @@ a {
      (not an eased curve) spreads that growth evenly across the whole
      entry/exit distance instead of front-loading it into an early sliver
      that reads as a flicker rather than a scroll-linked zoom. Ranges are
-     "cover 0%/50%/100%" rather than the named entry/exit ranges: entry
-     and exit are capped at roughly one viewport height no matter how
-     tall the section is, which read as too quick to register — splitting
-     the section's *entire* scroll-through span (first pixel in to last
-     pixel out) straight down the middle instead gives each half a longer,
-     content-proportional stretch of scroll to play out over. */
+     "cover 0%/40%/60%/100%" rather than the named entry/exit ranges (too
+     short to register — capped at roughly one viewport height no matter
+     how tall the section is) or a flat 50/50 split of the whole
+     scroll-through (longer, but left no real "at rest" zone: a section
+     scrolled to a perfectly normal, fully-readable position could still
+     be sitting at a non-1 scale, which renders visibly soft — a sub-1
+     transform forces the browser to resample the whole layer, softening
+     edges and text the same way a low-res image does when stretched, and
+     that's what actually read as "blurry" on the Currently Working On
+     cards). The middle 20% is a genuine plateau, pinned at exactly
+     scale(1), so any ordinary scrolled-to-a-section position renders
+     crisp; only the outer 40% on each side is actually mid-transition. */
   .section {
     animation: section-zoom-in linear forwards, section-zoom-out linear forwards;
     animation-timeline: view(), view();
-    animation-range: cover 0% cover 50%, cover 50% cover 100%;
+    animation-range: cover 0% cover 40%, cover 60% cover 100%;
   }
 
   /* The interlude is the one deliberately full-screen, breath-taking beat
@@ -598,7 +605,7 @@ a {
     animation: section-zoom-in-strong linear forwards,
       section-zoom-out-strong linear forwards;
     animation-timeline: view(), view();
-    animation-range: cover 0% cover 50%, cover 50% cover 100%;
+    animation-range: cover 0% cover 40%, cover 60% cover 100%;
   }
 
   /* Contact is the last stop on the page — there's no next scene for it
@@ -607,7 +614,7 @@ a {
   .contact {
     animation: section-zoom-in linear forwards;
     animation-timeline: view();
-    animation-range: cover 0% cover 50%;
+    animation-range: cover 0% cover 40%;
   }
 }
 
@@ -681,6 +688,7 @@ a {
   font-family: var(--font-display);
   font-size: 1.1rem;
   color: var(--text-label);
+  transition: color 0.6s linear;
 }
 
 .section__label-line {
@@ -812,6 +820,7 @@ a {
   font-size: 0.8rem;
   margin-bottom: 0.5rem;
   text-shadow: 0 2px 10px rgba(5, 7, 13, 0.85);
+  transition: color 0.6s linear;
 }
 
 .about__stat dd {
@@ -934,13 +943,20 @@ a {
   flex-direction: column;
 }
 
-/* An outlined "ghost" index number sits behind each category instead of a
+/* An outlined "ghost" index number sits beside each category instead of a
    card border — a typographic device instead of a container, so the three
    categories read as a numbered editorial sequence rather than identical
-   boxes stacked on top of each other. */
+   boxes stacked on top of each other. A grid (rather than the index being
+   absolutely positioned against the group's own top-left corner) puts the
+   number and the category title in the same row and lets `align-items`
+   center them against each other exactly, instead of guessing a fixed
+   top-offset that only lined up for one font size. */
 .stack__group {
-  position: relative;
-  padding: 2rem 0 2rem 4.5rem;
+  display: grid;
+  grid-template-columns: 2.5rem 1fr;
+  align-items: center;
+  column-gap: 1rem;
+  padding: 2rem 0;
   border-top: 1px solid var(--line);
 }
 
@@ -949,11 +965,10 @@ a {
 }
 
 .stack__index {
-  position: absolute;
-  left: 0;
-  top: 1.75rem;
+  grid-column: 1;
+  grid-row: 1;
   font-family: var(--font-display);
-  font-size: 3.25rem;
+  font-size: 1.85rem;
   line-height: 1;
   color: transparent;
   -webkit-text-stroke: 1px var(--line-strong);
@@ -961,20 +976,33 @@ a {
 }
 
 .stack__category {
+  grid-column: 2;
+  grid-row: 1;
   display: block;
-  margin-bottom: 1.1rem;
   font-family: var(--font-display);
-  font-size: 1.2rem;
+  font-size: 1.4rem;
   color: var(--text);
   text-shadow: 0 2px 14px rgba(5, 7, 13, 0.8);
 }
 
+/* A grid, not flex-wrap: flex-wrap lets each row wrap independently based
+   on its own item widths, so nothing lines up row to row (the previous
+   version had "Java"/"JavaScript" sitting under neither of the row
+   above's items) or group to group. Fixed column tracks give every row —
+   in every category — the same alignment. */
 .stack__items {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.6rem 1rem;
+  grid-column: 1 / -1;
+  grid-row: 2;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  /* Grid items stretch to fill their column by default, which would blow
+     the pill shape out into a full-width bar — start-align instead so
+     each stays content-sized while the column tracks themselves still
+     line up uniformly down the grid. */
+  justify-items: start;
+  gap: 0.75rem 1rem;
   list-style: none;
-  margin: 0;
+  margin: 1.4rem 0 0;
   padding: 0;
 }
 
@@ -1100,6 +1128,7 @@ a {
   border: 1px solid var(--line-strong);
   border-radius: 999px;
   padding: 0.3rem 0.85rem;
+  transition: color 0.6s linear;
 }
 
 .project__name {
@@ -1229,6 +1258,7 @@ a {
   font-family: var(--font-display);
   color: var(--text-label);
   font-size: 1.1rem;
+  transition: color 0.6s linear;
 }
 
 .current__title {
@@ -1382,6 +1412,7 @@ a {
 .contact__eyebrow {
   color: var(--text-label);
   margin: 0 0 1rem;
+  transition: color 0.6s linear;
 }
 
 .contact__headline {
@@ -1609,6 +1640,15 @@ button:focus-visible {
     display: flex;
   }
 
+  /* The nav is taller here (~101px: the Resume button plus its own
+     padding, vs. a plain text row on desktop) than the 5.5rem (88px)
+     clearance .section assumes — short by just enough that a jump
+     straight to a section (nav click, or scrollIntoView) tucked its
+     heading a few pixels behind the fixed nav. */
+  .section {
+    scroll-margin-top: 6.5rem;
+  }
+
   .interlude {
     min-height: 50vh;
   }
@@ -1647,15 +1687,14 @@ button:focus-visible {
     border-top: none;
   }
 
-  /* The ghost-number index and its left padding are sized for the desktop
-     column width; shrink both so they don't crowd the category on a phone. */
+  /* The ghost-number's column is sized for the desktop category text;
+     shrink it a touch on a phone. */
   .stack__group {
-    padding-left: 3rem;
+    grid-template-columns: 2rem 1fr;
   }
 
   .stack__index {
-    font-size: 2.25rem;
-    top: 0.9rem;
+    font-size: 1.5rem;
   }
 
   .project {

@@ -299,21 +299,25 @@ const playResult = video.play();
 if (playResult && playResult.catch) playResult.catch(() => {});
 
 // ---------------------------------------------------------------------------
-// Adaptive hero text contrast — the hero name/tagline gradually shift
-// between an icy-white and a deep-navy rendering as the video plays behind
-// them, so the text stays readable whether that moment of the scene is dark
-// or bright. This never touches playback (no currentTime, no seeking); it
-// only *reads* the current frame to estimate brightness.
+// Adaptive video-aware text contrast — the hero name/tagline, and (more
+// generally) every small label/caption across the whole site that uses the
+// --text-label token, gradually shift between a lighter and a darker
+// rendering as the video plays behind them, so they stay readable whether
+// that moment of the scene is dark or bright. This never touches playback
+// (no currentTime, no seeking); it only *reads* the current frame to
+// estimate brightness.
 //
 // Method: draw the video into a tiny (32×18) offscreen canvas — cheap
 // regardless of the video's real resolution — then average the luminance
-// of just the sub-region roughly behind the hero text (left/upper-middle
-// of frame). That raw sample is noisy frame-to-frame, so it's smoothed
-// with an exponential moving average before being mapped to a color; the
-// CSS `transition` on the affected properties smooths it a second time,
-// so the result eases continuously rather than snapping or flickering.
-// Sampling is throttled to ~7.5/sec (setInterval, not rAF) and skipped
-// entirely whenever the hero isn't the active scene.
+// of two regions: a narrow crop roughly behind the hero text (for the
+// hero-specific vars, only ever visible during the hero scene) and the
+// full frame (for --text-label, since its consumers — section numbers,
+// eyebrows, stat captions — are scattered all over each section, not one
+// fixed spot). Both raw samples are noisy frame-to-frame, so each is
+// smoothed with its own exponential moving average before being mapped to
+// a color; the CSS `transition` on every consumer smooths it a second
+// time, so the result eases continuously rather than snapping or
+// flickering. Sampling is throttled to ~7.5/sec (setInterval, not rAF).
 // ---------------------------------------------------------------------------
 
 (function initAdaptiveHeroContrast() {
@@ -340,9 +344,26 @@ if (playResult && playResult.catch) playResult.catch(() => {});
   const TEXT_BRIGHT_SCENE = [15, 28, 50];
   const SECONDARY_DARK_SCENE = [205, 214, 227];
   const SECONDARY_BRIGHT_SCENE = [32, 43, 64];
+  // --text-label's static color (#7f9bc0) is a mid-tone blue that can
+  // wash out against a bright patch of video with nothing but a text-
+  // shadow to help it — these endpoints swap it for something with real
+  // contrast at either extreme, while staying in the same blue family.
+  // Deliberately closer together than the hero pair above: this drives
+  // small captions scattered across every section, not one large focal
+  // heading, so a wide, saturated swing read as the label "glowing" and
+  // pulsing rather than quietly adapting.
+  const LABEL_DARK_SCENE = [148, 168, 202]; // a shade lighter than the old static color
+  const LABEL_BRIGHT_SCENE = [55, 68, 94]; // dark, muted navy-blue
 
   let smoothed = 0.35; // assume a mid-dark scene before the first real sample
+  let smoothedGeneral = 0.35;
   const SMOOTHING = 0.18; // exponential moving average factor per tick
+  // The label reads from the *whole* frame rather than one small crop, so
+  // frame-to-frame noise (motion, particles, compression) averages out
+  // less on its own — a much slower factor here is what actually keeps it
+  // calm; 0.18 (tuned for the hero's narrow, steadier crop) tracked that
+  // noise almost directly and read as flicker.
+  const SMOOTHING_GENERAL = 0.035;
 
   function lerp(a, b, t) {
     return Math.round(a + (b - a) * t);
@@ -365,11 +386,11 @@ if (playResult && playResult.catch) playResult.catch(() => {});
   }
 
   function sampleAndApply() {
-    if (document.body.dataset.scene !== "hero") return;
     if (video.readyState < 2) return;
 
     try {
       ctx.drawImage(video, 0, 0, SAMPLE_W, SAMPLE_H);
+
       const { data } = ctx.getImageData(cropX, cropY, cropW, cropH);
       let total = 0;
       const pixelCount = data.length / 4;
@@ -378,6 +399,19 @@ if (playResult && playResult.catch) playResult.catch(() => {});
       }
       const raw = total / pixelCount / 255; // 0 (black) .. 1 (white)
       smoothed += (raw - smoothed) * SMOOTHING;
+
+      // Full-frame average for --text-label: its consumers (section
+      // numbers, eyebrows, stat captions, …) are scattered all over
+      // whichever section is on screen, not one fixed spot like the hero
+      // text, so an overall brightness read is the more honest signal.
+      const { data: fullData } = ctx.getImageData(0, 0, SAMPLE_W, SAMPLE_H);
+      let fullTotal = 0;
+      const fullPixelCount = fullData.length / 4;
+      for (let i = 0; i < fullData.length; i += 4) {
+        fullTotal += fullData[i] * 0.299 + fullData[i + 1] * 0.587 + fullData[i + 2] * 0.114;
+      }
+      const rawFull = fullTotal / fullPixelCount / 255;
+      smoothedGeneral += (rawFull - smoothedGeneral) * SMOOTHING_GENERAL;
     } catch (err) {
       // Canvas readback blocked (e.g. some file:// origin quirks) — keep
       // using the last known value rather than erroring the page.
@@ -427,6 +461,19 @@ if (playResult && playResult.catch) playResult.catch(() => {});
     root.setProperty("--hero-text-shadow", shadow);
     root.setProperty("--hero-text-shadow-secondary", secondaryShadow);
     root.setProperty("--hero-text-stroke", stroke);
+
+    // Overrides the --text-label token itself (declared on :root in
+    // styles.css) rather than a separate variable, so every existing
+    // `color: var(--text-label)` consumer picks this up automatically —
+    // no per-selector changes needed to opt in. No steepen() here,
+    // deliberately: that curve exaggerates small input changes into much
+    // bigger output swings near either end, which is exactly what made
+    // this feel like it was "glowing"/pulsing rather than calmly
+    // adapting — a plain linear map moves only as much as the (already
+    // heavily-smoothed) brightness actually did.
+    const tGeneral = Math.min(Math.max(smoothedGeneral, 0), 1);
+    const label = `rgb(${lerp(LABEL_DARK_SCENE[0], LABEL_BRIGHT_SCENE[0], tGeneral)}, ${lerp(LABEL_DARK_SCENE[1], LABEL_BRIGHT_SCENE[1], tGeneral)}, ${lerp(LABEL_DARK_SCENE[2], LABEL_BRIGHT_SCENE[2], tGeneral)})`;
+    root.setProperty("--text-label", label);
   }
 
   sampleAndApply();
