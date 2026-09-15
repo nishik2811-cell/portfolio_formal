@@ -1,6 +1,3 @@
-/* ==========================================================================
-   Tokens
-   ========================================================================== */
 
 :root {
   --bg: #05070d;
@@ -403,8 +400,7 @@ a {
   /* Falls back to the static shadow until script.js's adaptive-contrast
      sampler sets these (see "Adaptive hero contrast" in script.js) — never
      unreadable before first sample, just not yet reactive to the scene. */
-  text-shadow: var(--hero-text-shadow, 0 4px 40px rgba(5, 7, 13, 0.7));
-  transition: text-shadow 0.6s ease-out;
+  text-shadow: 0 4px 30px rgba(5, 7, 13, 0.4);
 }
 
 .hero__name-word {
@@ -414,14 +410,8 @@ a {
      background-clip: text support (see below) just get this, which is
      already a fully legible result on its own. */
   color: var(--accent);
-  /* A thin adaptive stroke, alongside the shadow above, gives each letter
-     a hard edge — necessary against something as large and evenly bright
-     as, say, a full moon filling the frame, where a blurred shadow alone
-     thins out (see initAdaptiveHeroContrast in script.js). */
-  -webkit-text-stroke: 0.65px var(--hero-text-stroke, transparent);
   animation: heroReveal 0.8s var(--ease) forwards;
   animation-delay: calc(0.25s + var(--i) * 0.15s);
-  transition: color 0.6s linear;
 }
 
 /* A subtle two-stop gradient fill on the name — the flat adaptive color
@@ -447,9 +437,7 @@ a {
   max-width: 38ch;
   margin: 0 0 2.5rem;
   line-height: 1.6;
-  text-shadow: var(--hero-text-shadow-secondary, 0 2px 24px rgba(5, 7, 13, 0.6));
-  -webkit-text-stroke: 0.55px var(--hero-text-stroke, transparent);
-  transition: color 0.6s linear, text-shadow 0.6s linear;
+  text-shadow: 0 2px 16px rgba(5, 7, 13, 0.35);
 }
 
 .hero__cta {
