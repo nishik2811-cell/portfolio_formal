@@ -7,7 +7,8 @@
      so hierarchy comes from color as well as size/weight. */
   --text: #f3f5f7; /* primary headings */
   --text-secondary: #b8c7d9; /* body copy, descriptions */
-  --accent: #afc7ff; /* accent text, icons, active states — icy blue → lavender */
+  --accent: #afc7ff; /* accent text, icons, active states — icy blue */
+  --accent-2: #b8a6f2; /* lavender — paired with --accent for gradients/glows */
   --text-label: #7f9bc0; /* small labels, eyebrows, nav */
   --text-muted: #71809a; /* metadata: dates, categories, footer */
 
@@ -21,26 +22,30 @@
   --section-space: clamp(5rem, 12vw, 9rem);
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
 
-  /* Per-scene video/overlay treatment — overridden by body[data-scene="..."]
-     below. Content-heavy sections get a stronger overlay and a dimmer video;
-     the hero and the cinematic interlude let it breathe. */
-  --overlay-opacity: 0.6;
-  --video-brightness: 0.65;
+  /* Per-scene atmosphere — overridden by body[data-scene="..."] below.
+     --overlay-opacity dims the fixed sky/hills/moon (it sits below them in
+     z-index). --world-brightness is read by .world itself (see below),
+     which is the actual containing layer for every platform AND the cat —
+     applying it there, once, dims/relights the whole side-world together
+     instead of leaving the platforms undimmed while only the cat reacted. */
+  --overlay-opacity: 0.62;
+  --bg-shift: 0px;
+  --world-brightness: 1;
 }
 
-/* One shared video, one shared overlay — only these two variables change as
-   script.js updates body[data-scene] on section-enter (IntersectionObserver).
-   Nothing here touches playback, so there is nothing to cause the seeking
-   lag the scroll-scrubbed version had. */
-body[data-scene="hero"] { --overlay-opacity: 0.56; --video-brightness: 0.55; }
-body[data-scene="about"] { --overlay-opacity: 0.66; --video-brightness: 0.52; }
-body[data-scene="education"] { --overlay-opacity: 0.68; --video-brightness: 0.49; }
-body[data-scene="interlude"] { --overlay-opacity: 0.24; --video-brightness: 0.87; }
-body[data-scene="stack"] { --overlay-opacity: 0.76; --video-brightness: 0.45; }
-body[data-scene="projects"] { --overlay-opacity: 0.66; --video-brightness: 0.51; }
-body[data-scene="current"] { --overlay-opacity: 0.72; --video-brightness: 0.47; }
-body[data-scene="experience"] { --overlay-opacity: 0.72; --video-brightness: 0.47; }
-body[data-scene="contact"] { --overlay-opacity: 0.56; --video-brightness: 0.5; }
+/* A real brightness arc, not a flat vignette: bright at the hero, a peak
+   at the interlude ("Still curious."), then a deliberate dip through the
+   denser content sections that follow it, recovering to a second peak at
+   contact — a real "dull, then bright again" swing, not a subtle nudge. */
+body[data-scene="hero"] { --overlay-opacity: 0.48; --world-brightness: 1.05; }
+body[data-scene="about"] { --overlay-opacity: 0.58; --world-brightness: 1; }
+body[data-scene="education"] { --overlay-opacity: 0.61; --bg-shift: -4px; --world-brightness: 0.95; }
+body[data-scene="interlude"] { --overlay-opacity: 0.38; --bg-shift: -10px; --world-brightness: 1.15; }
+body[data-scene="stack"] { --overlay-opacity: 0.68; --world-brightness: 0.85; }
+body[data-scene="projects"] { --overlay-opacity: 0.74; --world-brightness: 0.75; }
+body[data-scene="current"] { --overlay-opacity: 0.76; --world-brightness: 0.72; }
+body[data-scene="experience"] { --overlay-opacity: 0.7; --bg-shift: 3px; --world-brightness: 0.78; }
+body[data-scene="contact"] { --overlay-opacity: 0.4; --bg-shift: 6px; --world-brightness: 1.15; }
 
 * {
   box-sizing: border-box;
@@ -60,8 +65,7 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-img,
-video {
+img {
   max-width: 100%;
   display: block;
 }
@@ -77,51 +81,173 @@ a {
 }
 
 /* ==========================================================================
-   Cinematic background — a fixed video layer sitting behind the entire
-   page, plus a static gradient overlay that keeps content readable without
-   ever fully hiding the footage. Both sit at negative z-index so normal
-   in-flow content (header/main/footer) always paints above them.
+   Night world — fixed, viewport-anchored layers behind the entire page:
+   a plain sky gradient, a moon, two distant hill silhouettes, twinkling
+   stars, a vignette, and a pointer-following glow. All negative z-index so
+   normal in-flow content (header/main/footer) always paints above them.
+   Quiet by design — no particle systems, nothing above ~2px per element.
    ========================================================================== */
 
-.bg-video {
+/* Shifted off a flat cold navy toward a warmer indigo-plum — echoes the
+   lavender/rose flowers and cream cat instead of sitting apart from them,
+   with a faint warm blush low on the horizon (where hills meet sky) tying
+   the whole palette together without turning the sky itself warm. */
+.sky {
   position: fixed;
   inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  /* Anchor the crop to the top of the frame — the video is taller/narrower
-     than most viewports, and a center crop was cutting the top of the
-     scene off. This keeps the top fully visible and only trims the bottom. */
-  object-position: 50% 0%;
+  z-index: -6;
+  background:
+    radial-gradient(140% 60% at 50% 100%, rgba(210, 160, 190, 0.1), transparent 60%),
+    linear-gradient(180deg, #0c0d1f 0%, #171432 42%, #26203f 75%, #1c1730 100%);
+}
+
+.moon {
+  position: fixed;
+  top: 9%;
+  right: 11%;
+  z-index: -5;
+  width: clamp(56px, 9vw, 96px);
+  height: clamp(56px, 9vw, 96px);
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #fbf4ee, #e6d6e8 55%, #b8a3d4 100%);
+  box-shadow: 0 0 60px 18px rgba(207, 168, 224, 0.16), 0 0 140px 60px rgba(160, 140, 210, 0.08);
+}
+
+.moon::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 30% 65%, rgba(170, 150, 195, 0.35) 0 12%, transparent 13%),
+    radial-gradient(circle at 62% 30%, rgba(170, 150, 195, 0.3) 0 15%, transparent 16%),
+    radial-gradient(circle at 68% 68%, rgba(170, 150, 195, 0.25) 0 9%, transparent 10%);
+}
+
+/* A couple of soft, wide cloud smudges drifting very slowly left to right —
+   pure CSS (two pseudo-elements on one wrapper), no extra markup, no JS. */
+.clouds {
+  position: fixed;
+  inset: 0;
+  z-index: -5;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.clouds::before,
+.clouds::after {
+  content: "";
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center, rgba(175, 199, 255, 0.09), transparent 70%);
+  filter: blur(4px);
+  animation: driftCloud 150s linear infinite;
+}
+
+.clouds::before {
+  top: 12%;
+  left: -25%;
+  width: 320px;
+  height: 80px;
+}
+
+.clouds::after {
+  top: 30%;
+  left: -45%;
+  width: 240px;
+  height: 64px;
+  opacity: 0.75;
+  animation-duration: 190s;
+  animation-delay: -60s;
+}
+
+@keyframes driftCloud {
+  from { transform: translateX(0); }
+  to { transform: translateX(140vw); }
+}
+
+/* One faint shooting star, on a long loop so it reads as an occasional
+   discovery rather than a recurring effect. */
+.shooting-star {
+  position: fixed;
+  top: 16%;
+  left: 6%;
+  z-index: -2;
+  width: 90px;
+  height: 2px;
+  pointer-events: none;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.9), transparent);
+  border-radius: 999px;
+  transform: rotate(22deg);
+  opacity: 0;
+  animation: shootingStar 16s linear infinite;
+}
+
+@keyframes shootingStar {
+  0%, 90% { opacity: 0; transform: rotate(22deg) translate(0, 0); }
+  91% { opacity: 1; }
+  96% { opacity: 1; transform: rotate(22deg) translate(50vw, 26vh); }
+  100% { opacity: 0; transform: rotate(22deg) translate(54vw, 28vh); }
+}
+
+/* Distant hill silhouettes — two layers, nudged a few px per scene (see
+   --bg-shift, body[data-scene] above) for a faint sense of depth without
+   ever amounting to real parallax. The near layer's jagged top edge reads
+   as a faint treeline rather than smooth dunes. */
+.hills {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
   z-index: -4;
-  /* Muted so the footage reads as atmosphere/lighting rather than a crisp
-     anime illustration sitting behind the content. Brightness is the one
-     part that shifts per section (see body[data-scene] above); it's a
-     single eased transition on scene change, not a per-frame cost. */
-  filter: saturate(0.55) brightness(var(--video-brightness, 0.6)) contrast(1.05);
-  transition: filter 1s var(--ease);
+  height: 22vh;
+  min-height: 140px;
+  pointer-events: none;
+  transform: translateY(var(--bg-shift, 0px));
+  transition: transform 1.2s var(--ease);
+}
+
+.hills__far,
+.hills__near {
+  position: absolute;
+  inset: 0;
+}
+
+.hills__far {
+  background: #191531;
+  opacity: 0.75;
+  clip-path: polygon(0 60%, 12% 42%, 26% 55%, 40% 32%, 55% 50%, 70% 27%, 85% 45%, 100% 36%, 100% 100%, 0 100%);
+}
+
+.hills__near {
+  background: #110e22;
+  clip-path: polygon(
+    0 85%, 6% 62%, 10% 78%, 16% 56%, 22% 76%, 30% 52%, 36% 74%,
+    44% 50%, 50% 72%, 58% 48%, 64% 70%, 72% 46%, 78% 68%,
+    86% 52%, 92% 70%, 100% 60%, 100% 100%, 0 100%
+  );
 }
 
 .bg-overlay {
   position: fixed;
   inset: 0;
   z-index: -3;
-  opacity: var(--overlay-opacity, 0.6);
+  opacity: var(--overlay-opacity, 1);
   transition: opacity 1s var(--ease);
   background:
-    radial-gradient(120% 55% at 50% 0%, rgba(5, 7, 13, 0.1), transparent 60%),
+    radial-gradient(120% 55% at 50% 0%, rgba(10, 7, 16, 0.05), transparent 60%),
     linear-gradient(
       180deg,
-      rgba(5, 7, 13, 0.25) 0%,
-      rgba(5, 7, 13, 0.5) 35%,
-      rgba(5, 7, 13, 0.72) 70%,
-      rgba(5, 7, 13, 0.86) 100%
+      rgba(10, 7, 16, 0.14) 0%,
+      rgba(10, 7, 16, 0.32) 40%,
+      rgba(10, 7, 16, 0.5) 100%
     );
 }
 
-/* A handful of fixed, CSS-only twinkling points — no particle library, no
-   per-frame JS. script.js sets each star's position/timing once at load via
-   inline style, then the browser handles the rest. */
+/* A handful of fixed, CSS-only twinkling points, plus a few larger slow
+   "motes" of light — no particle library, no per-frame JS. script.js sets
+   each one's position/timing once at load via inline style, then the
+   browser handles the rest. */
 .stars {
   position: fixed;
   inset: 0;
@@ -139,13 +265,28 @@ a {
   animation: twinkle 6s ease-in-out infinite;
 }
 
+/* Fireflies rather than plain stars — a warmer lavender-white glow with a
+   little horizontal drift alongside the vertical rise. */
+.star--mote {
+  width: 3px;
+  height: 3px;
+  background: #d9c9ff;
+  box-shadow: 0 0 7px 2px rgba(200, 190, 255, 0.6);
+  animation: twinkle-mote 11s ease-in-out infinite;
+}
+
 @keyframes twinkle {
   0%, 100% { opacity: 0; }
   50% { opacity: 0.7; }
 }
 
+@keyframes twinkle-mote {
+  0%, 100% { opacity: 0; transform: translate(0, 0); }
+  50% { opacity: 0.6; transform: translate(6px, -12px); }
+}
+
 /* Soft radial light that follows the pointer (fine-pointer devices only —
-   see script.js). Sits just under the content, above the video/overlay. */
+   see script.js). Sits just under the content, above the rest of the sky. */
 .bg-light {
   position: fixed;
   inset: 0;
@@ -204,11 +345,10 @@ a {
 }
 
 /* While the nav is still transparent (top of the hero, before scrolling
-   triggers .is-solid), its links sit directly over the raw video with
-   nothing behind them — so they borrow the same adaptive color the hero
-   text uses instead of a fixed dim tone that can wash out against a bright
-   moment. Once .is-solid lands, the opaque backdrop makes this moot and
-   the plain --text-label above takes back over. */
+   triggers .is-solid), its links sit directly over the night sky with
+   nothing behind them — so they use the brighter --accent tone instead of
+   the dimmer --text-label. Once .is-solid lands, the opaque backdrop makes
+   this moot and the plain --text-label above takes back over. */
 .nav:not(.is-solid) .nav__links a {
   color: var(--accent);
   transition: color 0.6s linear;
@@ -318,8 +458,10 @@ a {
    Hero
    ========================================================================== */
 
-/* A normal full-height section — no scroll-track, no scroll-jacking. The
-   video behind it is the same persistent element used everywhere else. */
+/* A normal full-height section — no scroll-track, no scroll-jacking. Sits
+   over the same fixed night-world layers (sky/moon/hills/stars/.world) as
+   the rest of the page — the hero is simply the first place they're seen,
+   not a separate instance of them. */
 .hero {
   position: relative;
   min-height: 100vh;
@@ -327,6 +469,8 @@ a {
   display: flex;
   flex-direction: column;
   justify-content: center;
+  align-items: center;
+  text-align: center;
   padding: 0 var(--gutter);
   overflow: hidden;
 }
@@ -368,7 +512,7 @@ a {
   /* Same adaptive color as the tagline — this chip only ever appears in
      the hero, so it can use the variable directly without needing the
      :not(.is-solid) scoping the nav links need. */
-  color: var(--hero-text-color-secondary, var(--text-label));
+  color: var(--text-label);
   transition: color 0.6s linear;
   margin: 0 0 1.5rem;
   padding: 0.4rem 0.9rem 0.4rem 0.7rem;
@@ -397,16 +541,13 @@ a {
   line-height: 1.05;
   margin: 0 0 1.5rem;
   letter-spacing: -0.01em;
-  /* Falls back to the static shadow until script.js's adaptive-contrast
-     sampler sets these (see "Adaptive hero contrast" in script.js) — never
-     unreadable before first sample, just not yet reactive to the scene. */
   text-shadow: 0 4px 30px rgba(5, 7, 13, 0.4);
 }
 
 .hero__name-word {
   display: inline-block;
   opacity: 0;
-  /* Plain adaptive color is the baseline/fallback — browsers without
+  /* Plain accent color is the baseline/fallback — browsers without
      background-clip: text support (see below) just get this, which is
      already a fully legible result on its own. */
   color: var(--accent);
@@ -414,16 +555,13 @@ a {
   animation-delay: calc(0.25s + var(--i) * 0.15s);
 }
 
-/* A subtle two-stop gradient fill on the name — the flat adaptive color
-   read as plain, so this deepens slightly across the letters instead,
-   using the same dark/light colors already driving everything else (see
-   --hero-text-color-deep in initAdaptiveHeroContrast, script.js) rather
-   than an unrelated hue. Gated behind @supports so the plain color above
-   remains a fully legible fallback where background-clip: text isn't
-   available, instead of invisible transparent text. */
+/* A subtle icy-blue → lavender gradient fill on the name. Gated behind
+   @supports so the plain color above remains a fully legible fallback
+   where background-clip: text isn't available, instead of invisible
+   transparent text. */
 @supports (background-clip: text) or (-webkit-background-clip: text) {
   .hero__name-word {
-    background-image: linear-gradient(100deg, var(--accent) 15%, var(--accent) 100%);
+    background-image: linear-gradient(100deg, #dce7ff 0%, var(--accent) 55%, var(--accent-2) 100%);
     background-clip: text;
     -webkit-background-clip: text;
     color: transparent;
@@ -444,6 +582,7 @@ a {
   display: flex;
   gap: 1rem;
   flex-wrap: wrap;
+  justify-content: center;
 }
 
 .btn {
@@ -502,12 +641,13 @@ a {
 .hero__scroll {
   position: absolute;
   bottom: 2.5rem;
-  left: var(--gutter);
+  left: 50%;
+  transform: translateX(-50%);
   display: flex;
   align-items: center;
   gap: 0.75rem;
   font-size: 0.8rem;
-  color: var(--hero-text-color-secondary, var(--text-label));
+  color: var(--text-label);
   transition: color 0.6s linear;
 }
 
@@ -540,8 +680,13 @@ a {
    ========================================================================== */
 
 .section {
+  position: relative;
   padding: var(--section-space) var(--gutter);
-  max-width: 78rem;
+  /* Narrower and centered on purpose (down from 78rem) — the world's side
+     ledges live in the margin this opens up outside the content column, so
+     the cat has genuine room to jump and be noticed instead of crowding
+     the text. */
+  max-width: 64rem;
   margin: 0 auto;
   /* Clears the fixed nav when jumping here via an anchor link (clicking a
      nav item, or any #hash navigation) — without this, the section's own
@@ -731,13 +876,14 @@ a {
 }
 
 /* ==========================================================================
-   Cinematic interlude — after About, before Tech Stack. Same persistent
-   background video; only the overlay (see body[data-scene="interlude"])
-   lightens so this reads as a deliberate visual breathing moment rather
-   than an empty gap.
+   Interlude — after About, before Education. A deliberate breathing moment:
+   the overlay lightens (see body[data-scene="interlude"]) — the world
+   framing the screen (.world, fixed) continues on as it does everywhere
+   else, so this reads as a beat to breathe rather than an empty gap.
    ========================================================================== */
 
 .interlude {
+  position: relative;
   min-height: 70vh;
   display: flex;
   align-items: center;
@@ -754,6 +900,364 @@ a {
   color: var(--text);
   text-shadow: 0 4px 40px rgba(5, 7, 13, 0.6);
   margin: 0;
+}
+
+/* ==========================================================================
+   World layer — ONE persistent, viewport-fixed layer (not per-section) of
+   small grassy ledges plus the cat mascot (cat.js), framing the left/right
+   edges of the screen while the portfolio's own sections scroll and zoom
+   through the middle. z-index -1 puts it behind the sky/moon/hills/stars'
+   own negative-z-index stack but still behind every real content element
+   (which paints as z-index:auto, always above negative-z-index siblings in
+   the same stacking context — body, here). Purely decorative and inert:
+   pointer-events are off except on the cat itself, which re-enables them
+   for its "poke" reaction.
+   ========================================================================== */
+
+.world {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  overflow: visible;
+  /* Dims/relights every platform AND the cat together, in one place — see
+     --world-brightness above. A CSS filter on a parent applies to its
+     whole rendered subtree, pseudo-elements (the platforms' shapes/vines)
+     included, so this doesn't need repeating per element. */
+  filter: brightness(var(--world-brightness, 1));
+  transition: filter 1.2s var(--ease);
+}
+
+/* Small patches of moonlit ground rather than floating discs — irregular
+   moss/grass silhouettes, a couple of tiny flowers and a grass-blade
+   fringe baked into one layered background (no extra elements needed for
+   those), a soft moonlight glow on the upper edge (::before), and — on
+   some — a hanging vine (::after). Muted, natural greens throughout;
+   nothing neon. Rooted to the LEFT edge with a flat vertical seam at x:0
+   (reinforced by the dark soil gradient in the first background layer),
+   dissolving into an irregular, jagged silhouette everywhere else — see
+   .platform--mirror for the right-edge version. Width/height scale with
+   the viewport (clamp) rather than a fixed px, so they stay genuinely
+   walkable on a wide monitor without crowding a laptop-width one. */
+.platform {
+  position: absolute;
+  width: clamp(84px, 9vw, 190px);
+  height: clamp(22px, 2.6vw, 34px);
+  left: 0;
+  transition: transform 0.35s var(--ease), filter 0.35s var(--ease);
+}
+
+/* The jagged grass silhouette lives on ::before, deliberately separate
+   from .platform itself: clip-path clips an element's ENTIRE rendered
+   subtree, pseudo-elements included, even ones positioned outside its own
+   box via a negative offset. With the shape on .platform directly, the
+   dangling vine (::after, bottom:-20px) was being silently clipped away
+   the instant it left the platform's own box — nothing was wrong with the
+   vine, it was being erased by its sibling's clip-path. Keeping the shape
+   on ::before and leaving .platform itself unclipped is what lets ::after
+   actually hang below it. */
+.platform::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  /* A real torn/zigzag edge, not a subtly-wavy rectangle — on a platform
+     this thin, the earlier version's few-percent wobble amounted to a
+     couple of px and read as a plain bar. Top and bottom edges each swing
+     across roughly a third of the platform's own height now. */
+  clip-path: polygon(
+    0% 20%, 12% 2%, 25% 26%, 37% 4%, 50% 28%, 62% 2%, 75% 24%, 87% 4%,
+    100% 18%, 100% 80%, 87% 98%, 75% 76%, 62% 98%, 50% 74%, 37% 98%,
+    25% 78%, 12% 98%, 0% 82%
+  );
+  background:
+    radial-gradient(ellipse at 25% 10%, rgba(175, 199, 255, 0.3), transparent 65%),
+    linear-gradient(90deg, #1c140e 0%, rgba(28, 20, 14, 0) 20%),
+    radial-gradient(circle at 14% 24%, #cfa8e0 0 3px, transparent 4px),
+    radial-gradient(circle at 26% 22%, #e3a9c4 0 2.5px, transparent 3.5px),
+    radial-gradient(circle at 40% 34%, #9fd0f2 0 2px, transparent 3px),
+    radial-gradient(circle at 55% 12%, #cfa8e0 0 2.5px, transparent 3.5px),
+    radial-gradient(circle at 62% 14%, #9fd0f2 0 2.5px, transparent 3.5px),
+    radial-gradient(circle at 72% 28%, #e3a9c4 0 2px, transparent 3px),
+    radial-gradient(circle at 80% 32%, #cfa8e0 0 2px, transparent 3px),
+    radial-gradient(circle at 90% 20%, #9fd0f2 0 2px, transparent 3px),
+    repeating-linear-gradient(96deg, rgba(150, 196, 140, 0.4) 0 2px, transparent 2px 8px),
+    linear-gradient(160deg, #3d4a35 0%, #24301f 55%, #1a2318 100%);
+  box-shadow: 0 14px 24px -10px rgba(5, 7, 13, 0.7);
+  pointer-events: none;
+}
+
+/* The right-edge mirror: same idea, flipped — flush seam at x:100%. */
+.platform--mirror {
+  left: auto;
+  right: 0;
+}
+
+.platform--mirror::before {
+  clip-path: polygon(
+    100% 8%, 100% 90%, 92% 99%, 76% 91%, 60% 100%, 42% 89%, 26% 98%,
+    10% 83%, 0% 60%, 5% 38%, 0% 18%, 15% 5%, 33% 12%,
+    51% 2%, 69% 10%, 87% 0%
+  );
+  background:
+    radial-gradient(ellipse at 75% 10%, rgba(175, 199, 255, 0.3), transparent 65%),
+    linear-gradient(270deg, #1c140e 0%, rgba(28, 20, 14, 0) 20%),
+    radial-gradient(circle at 86% 24%, #cfa8e0 0 3px, transparent 4px),
+    radial-gradient(circle at 74% 22%, #e3a9c4 0 2.5px, transparent 3.5px),
+    radial-gradient(circle at 60% 34%, #9fd0f2 0 2px, transparent 3px),
+    radial-gradient(circle at 45% 12%, #cfa8e0 0 2.5px, transparent 3.5px),
+    radial-gradient(circle at 38% 14%, #9fd0f2 0 2.5px, transparent 3.5px),
+    radial-gradient(circle at 28% 28%, #e3a9c4 0 2px, transparent 3px),
+    radial-gradient(circle at 20% 32%, #cfa8e0 0 2px, transparent 3px),
+    radial-gradient(circle at 10% 20%, #9fd0f2 0 2px, transparent 3px),
+    repeating-linear-gradient(96deg, rgba(150, 196, 140, 0.4) 0 2px, transparent 2px 8px),
+    linear-gradient(160deg, #3d4a35 0%, #24301f 55%, #1a2318 100%);
+}
+
+/* A subtle bounce + brief glow-up when the cat lands (cat.js toggles this
+   class briefly) — reads as the grass and flowers giving a little under
+   its weight, not a mechanical platform reaction. */
+.platform.is-landed {
+  animation: platformSettle 0.4s var(--ease);
+}
+
+@keyframes platformSettle {
+  0% { transform: scaleY(1); filter: brightness(1); }
+  35% { transform: scaleY(0.88); filter: brightness(1.25); }
+  100% { transform: scaleY(1); filter: brightness(1); }
+}
+
+/* A gentle sway while the cat is walking across it (cat.js toggles this
+   class for the duration of the walk phase only) — grass/flowers stirring
+   underfoot, not a mechanical wobble. */
+.platform.is-active {
+  animation: platformSway 1.1s ease-in-out infinite;
+}
+
+@keyframes platformSway {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(0.6deg); }
+}
+
+/* Six ledges by default (index.html): three per side, at different screen
+   heights, so the cat has a real network of short local hops plus an
+   occasional longer crossing between sides — see cat.js's weighted target
+   selection. --l1/--r1 are the widest, main ledges; --l2/--l3/--r2/--r3
+   smaller stepping ledges. Deliberately uneven lengths — long/medium/short
+   mixed across both sides rather than mirrored tiers, so the two edges
+   don't read as symmetric bookends.
+   Bold, mostly-fixed sizes now rather than tightly margin-scaled ones — a
+   viewport-driven calc() kept the "long" ledges too close to their own
+   floor to read as dramatically longer at ordinary desktop widths, which
+   was the actual point. A little vw is mixed in purely so they keep
+   growing on very wide monitors, not to shrink them back down. */
+.platform--l1 { top: 21vh; width: clamp(320px, 26vw, 620px); height: clamp(30px, 2.8vw, 42px); }
+.platform--l2 { top: 45vh; width: clamp(220px, 16vw, 340px); height: clamp(20px, 2.2vw, 30px); }
+.platform--l3 { top: 73vh; width: clamp(320px, 22vw, 460px); height: clamp(24px, 2.6vw, 36px); }
+.platform--r1 { top: 28vh; width: clamp(260px, 19vw, 400px); height: clamp(22px, 2.4vw, 32px); }
+.platform--r2 { top: 54vh; width: clamp(360px, 28vw, 680px); height: clamp(30px, 2.8vw, 42px); }
+.platform--r3 { top: 82vh; width: clamp(170px, 12vw, 260px); height: clamp(18px, 2vw, 26px); }
+
+/* Vines hanging all across the underside, not one bunch off a corner.
+   ::after now spans the platform's FULL width (rather than being one 2px
+   vine that box-shadow could only ever repeat copies of from one origin);
+   each of the 7 strands below is its own pair of background layers — a
+   thin stem (linear-gradient) plus a two-tone flower at its tip (a small
+   radial-gradient with a bright center fading to a petal color, so it
+   actually reads as a flower rather than a flat dot) — independently
+   positioned and independently long. */
+.platform::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  height: 54px;
+  pointer-events: none;
+  background-repeat: no-repeat;
+  background-image:
+    linear-gradient(180deg, rgba(150, 196, 140, 0.75), transparent),
+    radial-gradient(circle, #fff8 0%, #cfa8e0 35%, transparent 68%),
+    linear-gradient(180deg, rgba(150, 196, 140, 0.7), transparent),
+    radial-gradient(circle, #fff8 0%, #9fd0f2 35%, transparent 68%),
+    linear-gradient(180deg, rgba(150, 196, 140, 0.75), transparent),
+    radial-gradient(circle, #fff8 0%, #e3a9c4 35%, transparent 68%),
+    linear-gradient(180deg, rgba(150, 196, 140, 0.7), transparent),
+    radial-gradient(circle, #fff8 0%, #cfa8e0 35%, transparent 68%),
+    linear-gradient(180deg, rgba(150, 196, 140, 0.75), transparent),
+    radial-gradient(circle, #fff8 0%, #9fd0f2 35%, transparent 68%),
+    linear-gradient(180deg, rgba(150, 196, 140, 0.7), transparent),
+    radial-gradient(circle, #fff8 0%, #e3a9c4 35%, transparent 68%),
+    linear-gradient(180deg, rgba(150, 196, 140, 0.75), transparent),
+    radial-gradient(circle, #fff8 0%, #cfa8e0 35%, transparent 68%);
+  background-position:
+    6% 0, 6% 20px,
+    20% 0, 20% 32px,
+    34% 0, 34% 24px,
+    48% 0, 48% 40px,
+    62% 0, 62% 18px,
+    76% 0, 76% 34px,
+    90% 0, 90% 26px;
+  background-size:
+    2px 22px, 9px 9px,
+    2px 34px, 8px 8px,
+    2px 26px, 9px 9px,
+    2px 42px, 8px 8px,
+    2px 20px, 9px 9px,
+    2px 36px, 8px 8px,
+    2px 28px, 9px 9px;
+  transform-origin: top center;
+  animation: vineIdleSway 4.5s ease-in-out infinite;
+}
+
+@keyframes vineIdleSway {
+  0%, 100% { transform: rotate(-1deg); }
+  50% { transform: rotate(1deg); }
+}
+
+/* A quick, more energetic swing right as the cat lands nearby — overrides
+   the ambient sway for the moment .is-landed is present (see cat.js),
+   then falls back to it automatically once the class is removed. */
+.platform.is-landed::after {
+  animation: vineLandSway 0.6s ease-out;
+}
+
+@keyframes vineLandSway {
+  0% { transform: rotate(-1deg); }
+  30% { transform: rotate(-5deg); }
+  60% { transform: rotate(3deg); }
+  100% { transform: rotate(-1deg); }
+}
+
+/* The two main ledges get an even fuller, longer-reaching set of vines. */
+.platform--tuft::after {
+  height: 74px;
+  background-position:
+    5% 0, 5% 30px,
+    16% 0, 16% 46px,
+    27% 0, 27% 34px,
+    38% 0, 38% 56px,
+    49% 0, 49% 26px,
+    60% 0, 60% 48px,
+    71% 0, 71% 36px,
+    82% 0, 82% 52px,
+    93% 0, 93% 30px;
+  background-size:
+    2px 32px, 9px 9px,
+    2px 48px, 8px 8px,
+    2px 36px, 9px 9px,
+    2px 58px, 8px 8px,
+    2px 28px, 9px 9px,
+    2px 50px, 8px 8px,
+    2px 38px, 9px 9px,
+    2px 54px, 8px 8px,
+    2px 32px, 9px 9px;
+  background-image:
+    linear-gradient(180deg, rgba(150, 196, 140, 0.75), transparent),
+    radial-gradient(circle, #fff8 0%, #cfa8e0 35%, transparent 68%),
+    linear-gradient(180deg, rgba(150, 196, 140, 0.7), transparent),
+    radial-gradient(circle, #fff8 0%, #9fd0f2 35%, transparent 68%),
+    linear-gradient(180deg, rgba(150, 196, 140, 0.75), transparent),
+    radial-gradient(circle, #fff8 0%, #e3a9c4 35%, transparent 68%),
+    linear-gradient(180deg, rgba(150, 196, 140, 0.7), transparent),
+    radial-gradient(circle, #fff8 0%, #cfa8e0 35%, transparent 68%),
+    linear-gradient(180deg, rgba(150, 196, 140, 0.75), transparent),
+    radial-gradient(circle, #fff8 0%, #9fd0f2 35%, transparent 68%),
+    linear-gradient(180deg, rgba(150, 196, 140, 0.7), transparent),
+    radial-gradient(circle, #fff8 0%, #e3a9c4 35%, transparent 68%),
+    linear-gradient(180deg, rgba(150, 196, 140, 0.75), transparent),
+    radial-gradient(circle, #fff8 0%, #cfa8e0 35%, transparent 68%),
+    linear-gradient(180deg, rgba(150, 196, 140, 0.7), transparent),
+    radial-gradient(circle, #fff8 0%, #9fd0f2 35%, transparent 68%),
+    linear-gradient(180deg, rgba(150, 196, 140, 0.75), transparent),
+    radial-gradient(circle, #fff8 0%, #e3a9c4 35%, transparent 68%);
+}
+
+/* On the "firefly" ledges, the whole hanging cluster gently glows instead
+   of a separate bug-shaped dot — reads as a firefly resting among the
+   flowers rather than competing with them. */
+.platform--glow::after {
+  animation: vineIdleSway 4.5s ease-in-out infinite, glowPulse 3.6s ease-in-out infinite;
+}
+
+@keyframes glowPulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+/* A couple of small warm lantern glows resting near the world's edges —
+   fixed, static, no DOM per section. */
+.lantern {
+  position: fixed;
+  z-index: -1;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ffd9a8;
+  box-shadow: 0 0 10px 3px rgba(255, 200, 140, 0.45);
+  animation: glowPulse 4.4s ease-in-out infinite;
+}
+
+.lantern--a { left: 6%; top: 34vh; }
+.lantern--b { right: 7%; top: 64vh; animation-delay: -2.2s; }
+
+/* A faint, static constellation — one of the sky's few fixed points of
+   interest, deliberately understated (see .sky/.moon above for the rest of
+   the background hierarchy). */
+.constellation {
+  position: fixed;
+  top: 10%;
+  left: 8%;
+  z-index: -5;
+  width: clamp(120px, 16vw, 220px);
+  height: auto;
+  opacity: 0.8;
+}
+
+/* A few short-lived dust motes spawned on landing (cat.js) — capped at a
+   handful per jump and removed right after their own animation, never
+   accumulating. */
+.cat-dust {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  border-radius: 2px 60% 2px 60%;
+  background: rgba(160, 202, 150, 0.85);
+  animation: dustPuff 0.5s ease-out forwards;
+}
+
+@keyframes dustPuff {
+  0% { transform: translate(0, 0) scale(1); opacity: 0.8; }
+  100% { transform: translate(var(--dx, 10px), -14px) scale(0.3); opacity: 0; }
+}
+
+/* The cat — a canvas character drawn by cat.js, moved between sections'
+   .world layers and between platforms within a section entirely by JS
+   (a walk shuffle + a real rAF-driven jump arc; see cat.js). Only opacity
+   transitions in CSS — left/top are set every animation tick by JS, so a
+   CSS transition on them would just fight the per-frame updates. */
+.cat {
+  position: absolute;
+  height: clamp(64px, 9vw, 100px);
+  width: auto;
+  aspect-ratio: 220 / 180;
+  left: 2%;
+  top: 80%;
+  transform-origin: 50% 85%;
+  pointer-events: auto;
+  cursor: default;
+  /* Brightness now comes from the parent .world's filter (see above) so it
+     moves together with the platforms — this one is just the shadow. */
+  filter: drop-shadow(0 8px 10px rgba(5, 7, 13, 0.5));
+  transition: opacity 0.35s var(--ease);
+}
+
+@keyframes catPoke {
+  0%, 100% { transform: scale(1); }
+  40% { transform: scale(1.14) translateY(-4px); }
+}
+
+.cat.is-poked {
+  animation: catPoke 0.32s var(--ease);
 }
 
 /* ==========================================================================
@@ -1642,6 +2146,24 @@ button:focus-visible {
    ========================================================================== */
 
 @media (max-width: 860px) {
+  /* Tablet: simplify the environment rather than remove it — a smaller
+     moon/hill band and slightly smaller platforms, so they read as detail
+     rather than competing with the (now narrower) content column. */
+  .moon {
+    box-shadow: 0 0 40px 12px rgba(175, 199, 255, 0.14), 0 0 90px 40px rgba(140, 160, 220, 0.06);
+  }
+
+  .hills {
+    height: 16vh;
+  }
+
+  /* Fewer ledges on tablet — the clamp()s on .platform already shrink the
+     rest; just drop the lowest ledge on each side. */
+  .platform--l3,
+  .platform--r3 {
+    display: none;
+  }
+
   .nav__links {
     display: none;
   }
@@ -1733,6 +2255,26 @@ button:focus-visible {
   }
 }
 
+/* Mobile: keep the cat and just one ledge per side — a small sign of the
+   world rather than a competing layer — and shrink the hills. cat.js reads
+   the same breakpoint to slow down how often it hops. */
+@media (max-width: 640px) {
+  .platform--l1,
+  .platform--l2,
+  .platform--r2 {
+    display: none;
+  }
+
+  .hills {
+    height: 12vh;
+    min-height: 90px;
+  }
+
+  .cat {
+    height: clamp(52px, 15vw, 70px);
+  }
+}
+
 /* A phone in landscape is short (~375–430px tall) but the hero's content
    (status chip + name + tagline + CTAs) is sized for a tall, portrait
    viewport — vertically centered there, it overflows a short one both
@@ -1801,7 +2343,8 @@ button:focus-visible {
   .hero__scroll-line::after,
   .hero__status-dot,
   .current__status::before,
-  .star {
+  .star,
+  .star--mote {
     animation: none;
   }
 
@@ -1809,9 +2352,36 @@ button:focus-visible {
     opacity: 0.4;
   }
 
+  .star--mote {
+    opacity: 0.35;
+  }
+
   .bg-light,
-  .cursor-spark {
+  .cursor-spark,
+  .shooting-star {
     display: none;
+  }
+
+  .clouds::before,
+  .clouds::after,
+  .platform::after,
+  .platform--glow::after,
+  .lantern {
+    animation: none;
+  }
+
+  /* The cat stays (simplified, not removed): one still frame per section,
+     placed instantly on scene change, no blink/look/hop/poke — see cat.js,
+     which checks the same prefers-reduced-motion query before scheduling
+     any of those. */
+  .cat {
+    transition: none;
+    animation: none;
+    filter: none;
+  }
+
+  .world {
+    transition: none;
   }
 
   /* Staged hero/word reveals and the section-label line-draw become instant
@@ -1858,7 +2428,7 @@ button:focus-visible {
   .stack__item::before,
   .stack__note,
   .section__label-line,
-  .bg-video,
+  .hills,
   .bg-overlay {
     transition: none;
   }
