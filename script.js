@@ -10,7 +10,16 @@ function renderStack() {
       <div class="stack__row reveal">
         <span class="stack__category">${group.category}</span>
         <ul class="stack__items">
-          ${group.items.map((item) => `<li>${item}</li>`).join("")}
+          ${group.items
+            .map(
+              (item) => `
+            <li>
+              <span class="stack__item" tabindex="0">
+                ${item.name}<span class="stack__note">${item.note}</span>
+              </span>
+            </li>`
+            )
+            .join("")}
         </ul>
       </div>`
     )
@@ -26,12 +35,14 @@ function renderProjects() {
         <h3 class="project__name">${p.name}</h3>
         <div class="project__body">
           <p class="project__desc">${p.description}</p>
-          <ul class="project__tech">
-            ${p.tech.map((t) => `<li>${t}</li>`).join("")}
-          </ul>
+          ${
+            p.tech.length
+              ? `<ul class="project__tech">${p.tech.map((t) => `<li>${t}</li>`).join("")}</ul>`
+              : ""
+          }
           <div class="project__links">
-            ${p.github ? `<a href="${p.github}" target="_blank" rel="noopener">Code</a>` : ""}
-            ${p.demo ? `<a href="${p.demo}" target="_blank" rel="noopener">Live demo</a>` : ""}
+            ${p.github ? `<a href="${p.github}" target="_blank" rel="noopener">Code <span>→</span></a>` : ""}
+            ${p.demo ? `<a href="${p.demo}" target="_blank" rel="noopener">Live demo <span>→</span></a>` : ""}
           </div>
         </div>
       </article>`
@@ -90,8 +101,11 @@ renderCurrent();
 renderExperience();
 renderContact();
 
+const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
 // ---------------------------------------------------------------------------
-// Navigation — solid background on scroll, mobile menu toggle.
+// Navigation — solid background on scroll, active-section indicator, mobile
+// menu toggle.
 // ---------------------------------------------------------------------------
 
 const nav = document.getElementById("nav");
@@ -120,6 +134,27 @@ navMobile.querySelectorAll("a").forEach((link) =>
   link.addEventListener("click", closeMobileNav)
 );
 
+// Highlights the nav link for whichever section currently sits in the
+// vertical center of the viewport — event-driven (IntersectionObserver),
+// not a scroll listener, so it costs nothing between section crossings.
+const desktopNavLinks = document.querySelectorAll(".nav__links a");
+const sectionObserver = new IntersectionObserver(
+  (entries) => {
+    entries.forEach((entry) => {
+      if (!entry.isIntersecting) return;
+      const id = entry.target.id;
+      desktopNavLinks.forEach((a) => {
+        a.classList.toggle("is-active", a.getAttribute("href") === `#${id}`);
+      });
+    });
+  },
+  { rootMargin: "-45% 0px -45% 0px", threshold: 0 }
+);
+["home", "about", "stack", "projects", "current", "experience", "contact"].forEach((id) => {
+  const el = document.getElementById(id);
+  if (el) sectionObserver.observe(el);
+});
+
 // ---------------------------------------------------------------------------
 // Reveal-on-scroll — one subtle fade/slide-in per element, first time only.
 // ---------------------------------------------------------------------------
@@ -139,49 +174,43 @@ const revealObserver = new IntersectionObserver(
 document.querySelectorAll(".reveal").forEach((el) => revealObserver.observe(el));
 
 // ---------------------------------------------------------------------------
-// Cinematic background video — a single fixed, full-viewport <video> behind
-// the whole page (see .bg-video in styles.css). Overall page scroll drives
-// video.currentTime in three phases:
+// Cinematic hero video — a single fixed, full-viewport <video> behind the
+// whole page (see .bg-video in styles.css). Only the HERO's own scroll track
+// scrubs it; once the user scrolls past the hero, the video hands off to
+// normal looping playback and is never touched by scroll again.
 //
-//   1. Hero        — scrolling through the hero plays the video's opening.
-//   2. Cinematic beat — a short scroll distance right after the hero where
-//      the video holds close to that opening moment (a small drift, not a
-//      hard freeze) before continuing — the "~1.5s breathing room" beat.
-//   3. Rest of page — About → Contact map across the remainder of the video,
-//      ending near its final frames at Contact.
+//   1. Hero   — scrolling through the hero's tall track (.hero, 240vh) plays
+//               the video's first HERO_TIME_FRACTION, eased with easeOutCubic
+//               so motion is quickest early and settles near the end — the
+//               "cinematic breathing" beat the brief asked for, expressed as
+//               a curve rather than a separate freeze step.
+//   2. Rest   — past the hero, video.currentTime is never written again; the
+//               video just plays (and loops) natively in the background.
 //
-// Performance notes (this replaced an earlier version that visibly lagged):
-//   - No getBoundingClientRect() in the hot path. That forces a synchronous
-//     layout on every call; done every animation frame while scrolling, it
-//     was the main source of the stutter. Section heights are measured once
-//     on load/resize instead, and the per-frame math is pure arithmetic on
-//     cached numbers + window.scrollY.
-//   - video.currentTime is only ever written when it would actually change
-//     by a meaningful amount (a fraction of a frame). Writing it on every
-//     wheel/scroll tick — even by thousandths of a second — still asks the
-//     browser to reseek/redecode for no visible difference.
-//   - Scroll events themselves are coalesced into rAF via the `ticking`
-//     flag, so a burst of wheel events collapses into one update per frame.
+// Performance: no getBoundingClientRect() in the scroll hot path (hero
+// height is measured once on load/resize); video.currentTime is only ever
+// written when the change is bigger than a fraction of a frame; scroll
+// events coalesce into a single requestAnimationFrame via `ticking`.
 // ---------------------------------------------------------------------------
 
 const video = document.getElementById("bgVideo");
-const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const heroEl = document.getElementById("home");
+const heroScrollHint = document.getElementById("heroScroll");
 
-const HOLD_FRACTION = 0.18; // % of video duration reached by the end of the hero
-const DRIFT_FRACTION = 0.02; // tiny extra progress allowed during the cinematic beat
+const HERO_TIME_FRACTION = 0.25; // the hero uses roughly the first quarter of the video
 const MIN_TIME_DELTA = 1 / 60; // skip writes smaller than this — no visible difference
 
 let duration = 0;
 let heroHeight = window.innerHeight;
-let pausePx = window.innerHeight * 0.6; // scroll distance the "beat" occupies
-let scrollableHeight = 0;
+let isScrubbing = true;
 let ticking = false;
 
 function measure() {
-  const hero = document.getElementById("home");
-  heroHeight = hero ? hero.offsetHeight : window.innerHeight;
-  pausePx = window.innerHeight * 0.6;
-  scrollableHeight = Math.max(document.documentElement.scrollHeight - window.innerHeight, 1);
+  heroHeight = heroEl ? heroEl.offsetHeight : window.innerHeight;
+}
+
+function easeOutCubic(x) {
+  return 1 - Math.pow(1 - x, 3);
 }
 
 video.addEventListener("loadedmetadata", () => {
@@ -189,38 +218,24 @@ video.addEventListener("loadedmetadata", () => {
   onScroll();
 });
 
-function computeTargetTime() {
-  if (!duration) return 0;
-
-  const scrollY = window.scrollY;
-  const holdTime = duration * HOLD_FRACTION;
-  const pauseEnd = heroHeight + pausePx;
-
-  if (scrollY <= heroHeight) {
-    return (scrollY / heroHeight) * holdTime;
-  }
-
-  if (scrollY <= pauseEnd) {
-    const p = (scrollY - heroHeight) / pausePx;
-    return holdTime + p * duration * DRIFT_FRACTION;
-  }
-
-  const startTime = holdTime + duration * DRIFT_FRACTION;
-  const restDistance = Math.max(scrollableHeight - pauseEnd, 1);
-  const p = Math.min((scrollY - pauseEnd) / restDistance, 1);
-  return startTime + p * (duration - startTime);
+function heroProgress() {
+  return Math.min(Math.max(window.scrollY / heroHeight, 0), 1);
 }
 
-// Self-perpetuating rAF loop: keeps easing video.currentTime toward the
-// scroll-derived target every frame until it converges, so momentum/inertia
-// scrolling (and the tail end of a single wheel notch) stays smooth instead
-// of stalling between scroll events.
-function step() {
+function setScrubUI(p) {
+  // Hide the scroll hint mid-scrub, bring it back near the end as a cue
+  // that the site is about to open up.
+  heroScrollHint.classList.toggle("is-mid", p > 0.08 && p < 0.85);
+}
+
+function scrubStep() {
   if (!duration) {
     ticking = false;
     return;
   }
-  const target = computeTargetTime();
+  const p = heroProgress();
+  setScrubUI(p);
+  const target = easeOutCubic(p) * HERO_TIME_FRACTION * duration;
   const diff = target - video.currentTime;
 
   if (prefersReducedMotion) {
@@ -229,22 +244,36 @@ function step() {
     return;
   }
 
-  const next = video.currentTime + diff * 0.2;
+  const next = video.currentTime + diff * 0.22;
   if (Math.abs(next - video.currentTime) > MIN_TIME_DELTA) {
     video.currentTime = next;
   }
 
   if (Math.abs(diff) > 0.02) {
-    requestAnimationFrame(step);
+    requestAnimationFrame(scrubStep);
   } else {
     ticking = false;
   }
 }
 
+function syncVideoMode() {
+  const inHero = window.scrollY < heroHeight;
+  if (inHero && !isScrubbing) {
+    isScrubbing = true;
+    video.pause();
+  } else if (!inHero && isScrubbing) {
+    isScrubbing = false;
+    video.loop = true;
+    const playResult = video.play();
+    if (playResult && playResult.catch) playResult.catch(() => {});
+  }
+}
+
 function onScroll() {
-  if (!ticking) {
+  syncVideoMode();
+  if (isScrubbing && !ticking) {
     ticking = true;
-    requestAnimationFrame(step);
+    requestAnimationFrame(scrubStep);
   }
 }
 
@@ -258,23 +287,92 @@ window.addEventListener("scroll", onScroll, { passive: true });
 window.addEventListener("resize", onResize);
 
 // ---------------------------------------------------------------------------
-// Custom cursor — a small glowing core with a softly trailing aura. Only
-// created at all on fine-pointer (mouse/trackpad) devices, so touch screens
-// never pay for the extra DOM node or the rAF loop.
+// Atmosphere — a handful of CSS-only twinkling stars. Generated once here,
+// then left entirely to CSS keyframes; no per-frame JS cost.
+// ---------------------------------------------------------------------------
+
+(function initStars() {
+  const container = document.getElementById("stars");
+  if (!container) return;
+  const count = window.innerWidth < 640 ? 10 : 18;
+  for (let i = 0; i < count; i++) {
+    const star = document.createElement("span");
+    star.className = "star";
+    star.style.left = `${Math.random() * 100}%`;
+    star.style.top = `${Math.random() * 100}%`;
+    star.style.animationDelay = `${(Math.random() * 6).toFixed(2)}s`;
+    star.style.animationDuration = `${(5 + Math.random() * 4).toFixed(2)}s`;
+    container.appendChild(star);
+  }
+})();
+
+// ---------------------------------------------------------------------------
+// Fine-pointer-only interactive layer: custom cursor, pointer-reactive
+// background light, magnetic buttons, and per-card cursor-follow light on
+// project cards. Nothing here is created on touch devices — matchMedia
+// gates the whole block, so touch pays zero cost for it.
 // ---------------------------------------------------------------------------
 
 if (window.matchMedia("(pointer: fine)").matches) {
-  const cursor = document.createElement("div");
-  cursor.className = "cursor";
-  cursor.innerHTML = '<div class="cursor__aura"></div><div class="cursor__core"></div>';
-  document.body.appendChild(cursor);
+  const core = document.createElement("div");
+  core.className = "cursor-core";
+  const aura = document.createElement("div");
+  aura.className = "cursor-aura";
+  aura.innerHTML = '<span class="cursor-aura__label">View</span>';
+  document.body.append(core, aura);
   document.documentElement.classList.add("has-custom-cursor");
+
+  const bgLight = document.getElementById("bgLight");
+  const starsLayer = document.getElementById("stars");
+  if (bgLight) bgLight.classList.add("is-active");
 
   let targetX = window.innerWidth / 2;
   let targetY = window.innerHeight / 2;
-  let cursorX = targetX;
-  let cursorY = targetY;
+  let coreX = targetX;
+  let coreY = targetY;
+  let auraX = targetX;
+  let auraY = targetY;
   let cursorTicking = false;
+
+  function renderCursor() {
+    if (prefersReducedMotion) {
+      coreX = targetX;
+      coreY = targetY;
+      auraX = targetX;
+      auraY = targetY;
+    } else {
+      // Core tracks tightly; the aura settles in a beat behind it, giving
+      // the trailing "energy particle" feel without spawning extra nodes.
+      coreX += (targetX - coreX) * 0.55;
+      coreY += (targetY - coreY) * 0.55;
+      auraX += (targetX - auraX) * 0.18;
+      auraY += (targetY - auraY) * 0.18;
+    }
+
+    core.style.transform = `translate3d(${coreX}px, ${coreY}px, 0) translate(-50%, -50%)`;
+    aura.style.transform = `translate3d(${auraX}px, ${auraY}px, 0) translate(-50%, -50%)`;
+    document.documentElement.style.setProperty("--mx", `${targetX}px`);
+    document.documentElement.style.setProperty("--my", `${targetY}px`);
+
+    if (starsLayer && !prefersReducedMotion) {
+      const dx = (targetX / window.innerWidth - 0.5) * 10;
+      const dy = (targetY / window.innerHeight - 0.5) * 10;
+      starsLayer.style.transform = `translate(${dx}px, ${dy}px)`;
+    }
+
+    const settled =
+      Math.abs(targetX - coreX) < 0.1 &&
+      Math.abs(targetY - coreY) < 0.1 &&
+      Math.abs(targetX - auraX) < 0.1 &&
+      Math.abs(targetY - auraY) < 0.1;
+
+    if (!settled) {
+      requestAnimationFrame(renderCursor);
+    } else {
+      cursorTicking = false;
+    }
+  }
+  renderCursor();
 
   window.addEventListener(
     "pointermove",
@@ -289,30 +387,73 @@ if (window.matchMedia("(pointer: fine)").matches) {
     { passive: true }
   );
 
-  function renderCursor() {
-    if (prefersReducedMotion) {
-      cursorX = targetX;
-      cursorY = targetY;
-    } else {
-      // Slight inertia — the aura settles a beat behind the raw pointer.
-      cursorX += (targetX - cursorX) * 0.35;
-      cursorY += (targetY - cursorY) * 0.35;
+  // Hover states — checks e.relatedTarget so moving between two elements
+  // that share the same closest(".project"/"a, button, ...") ancestor
+  // doesn't flicker the state off and back on.
+  document.addEventListener("mouseover", (e) => {
+    if (e.target.closest(".project")) {
+      aura.classList.add("is-project", "is-hovering");
+      core.classList.add("is-hovering");
+    } else if (e.target.closest("a, button, .stack__item, .about__tag")) {
+      aura.classList.add("is-hovering");
+      core.classList.add("is-hovering");
     }
-    cursor.style.transform = `translate3d(${cursorX}px, ${cursorY}px, 0)`;
+  });
 
-    if (Math.abs(targetX - cursorX) > 0.1 || Math.abs(targetY - cursorY) > 0.1) {
-      requestAnimationFrame(renderCursor);
-    } else {
-      cursorTicking = false;
+  document.addEventListener("mouseout", (e) => {
+    const project = e.target.closest(".project");
+    if (project && (!e.relatedTarget || !project.contains(e.relatedTarget))) {
+      aura.classList.remove("is-project", "is-hovering");
+      core.classList.remove("is-hovering");
     }
+    const interactive = e.target.closest("a, button, .stack__item, .about__tag");
+    if (interactive && (!e.relatedTarget || !interactive.contains(e.relatedTarget))) {
+      aura.classList.remove("is-hovering");
+      core.classList.remove("is-hovering");
+    }
+  });
+
+  document.addEventListener("mouseleave", () => {
+    core.style.opacity = "0";
+    aura.style.opacity = "0";
+  });
+  document.addEventListener("mouseenter", () => {
+    core.style.opacity = "1";
+    aura.style.opacity = "1";
+  });
+
+  // Magnetic buttons — a small, damped pull toward the pointer.
+  if (!prefersReducedMotion) {
+    document.querySelectorAll(".btn").forEach((btn) => {
+      btn.addEventListener("mousemove", (e) => {
+        const rect = btn.getBoundingClientRect();
+        const relX = e.clientX - (rect.left + rect.width / 2);
+        const relY = e.clientY - (rect.top + rect.height / 2);
+        const pull = 0.2;
+        const maxPull = 8;
+        const x = Math.max(-maxPull, Math.min(maxPull, relX * pull));
+        const y = Math.max(-maxPull, Math.min(maxPull, relY * pull));
+        btn.style.transform = `translate(${x}px, ${y}px)`;
+      });
+      btn.addEventListener("mouseleave", () => {
+        btn.style.transform = "";
+      });
+    });
   }
 
-  document.addEventListener("mouseover", (e) => {
-    if (e.target.closest("a, button")) cursor.classList.add("is-hovering");
+  // Per-card mouse-follow light on project cards. Rect is cached on enter
+  // rather than re-measured every mousemove.
+  document.querySelectorAll(".project").forEach((card) => {
+    let rect = null;
+    card.addEventListener("pointerenter", () => {
+      rect = card.getBoundingClientRect();
+    });
+    card.addEventListener("pointermove", (e) => {
+      if (!rect) return;
+      const x = ((e.clientX - rect.left) / rect.width) * 100;
+      const y = ((e.clientY - rect.top) / rect.height) * 100;
+      card.style.setProperty("--mx", `${x}%`);
+      card.style.setProperty("--my", `${y}%`);
+    });
   });
-  document.addEventListener("mouseout", (e) => {
-    if (e.target.closest("a, button")) cursor.classList.remove("is-hovering");
-  });
-  document.addEventListener("mouseleave", () => cursor.style.opacity = "0");
-  document.addEventListener("mouseenter", () => cursor.style.opacity = "1");
 }

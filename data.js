@@ -6,49 +6,57 @@ const PORTFOLIO_DATA = {
   techStack: [
     {
       category: "Languages",
-      items: ["Python", "JavaScript", "TypeScript", "C++", "Java"],
+      items: [
+        { name: "C++", note: "Systems / DSA" },
+        { name: "Python", note: "ML / Data" },
+        { name: "JavaScript", note: "Web" },
+      ],
     },
     {
-      category: "Web Development",
-      items: ["React", "Next.js", "Node.js", "Express", "Tailwind CSS"],
+      category: "Web",
+      items: [
+        { name: "HTML", note: "Markup" },
+        { name: "CSS", note: "Styling" },
+        { name: "React", note: "Frontend" },
+      ],
     },
     {
-      category: "AI / Machine Learning",
-      items: ["PyTorch", "scikit-learn", "Pandas", "OpenAI API", "LangChain"],
-    },
-    {
-      category: "Databases",
-      items: ["PostgreSQL", "MongoDB", "Redis", "Firebase"],
+      category: "Data / ML",
+      items: [
+        { name: "NumPy", note: "Numerical computing" },
+        { name: "Pandas", note: "Data wrangling" },
+        { name: "Scikit-learn", note: "Modeling" },
+      ],
     },
     {
       category: "Tools",
-      items: ["Git", "Docker", "Figma", "Vercel", "Linux"],
+      items: [
+        { name: "Git", note: "Version control" },
+        { name: "GitHub", note: "Collaboration" },
+      ],
     },
   ],
 
   projects: [
     {
-      name: "Project Aperture",
-      description:
-        "A full-stack platform that reimagines how small teams track and ship their work, with a focus on speed and clarity over feature bloat.",
-      tech: ["React", "Node.js", "PostgreSQL"],
-      github: "https://github.com/",
-      demo: "https://example.com/",
+      name: "ARGUS",
+      description: "Crime monitoring / risk analysis system.",
+      tech: [],
+      github: null,
+      demo: null,
     },
     {
-      name: "Meridian",
-      description:
-        "A data visualization tool that turns dense spreadsheets into interactive, explorable stories for non-technical audiences.",
-      tech: ["TypeScript", "D3.js", "Next.js"],
-      github: "https://github.com/",
-      demo: "https://example.com/",
+      name: "AQI Predictor",
+      description: "Machine learning based air quality prediction.",
+      tech: ["Python", "Machine Learning"],
+      github: null,
+      demo: null,
     },
     {
-      name: "Lumen CLI",
-      description:
-        "A developer command-line tool for scaffolding and deploying side projects in seconds, built to remove the friction of starting new work.",
-      tech: ["Python", "Docker"],
-      github: "https://github.com/",
+      name: "Sanchay",
+      description: "AI-driven citizen benefit and scheme discovery platform.",
+      tech: ["AI"],
+      github: null,
       demo: null,
     },
   ],

@@ -30,6 +30,8 @@
     tabindex="-1"
   ></video>
   <div class="bg-overlay" aria-hidden="true"></div>
+  <div class="bg-light" id="bgLight" aria-hidden="true"></div>
+  <div class="stars" id="stars" aria-hidden="true"></div>
 
   <!-- Navigation -->
   <header class="nav" id="nav">
@@ -62,24 +64,30 @@
 
   <main>
 
-    <!-- 1. Hero -->
+    <!-- 1. Hero — a tall scroll track; the inner content stays pinned while
+         that extra height lets script.js scrub the background video. -->
     <section class="hero" id="home">
-      <div class="hero__inner">
-        <p class="hero__eyebrow">Personal Portfolio</p>
-        <h1 class="hero__name">Nishita&nbsp;Kumari</h1>
-        <p class="hero__tagline">
-          I build software at the intersection of design, data and
-          artificial intelligence — currently studying, always shipping.
-        </p>
-        <div class="hero__cta">
-          <a href="#projects" class="btn btn--primary">View my work</a>
-          <a href="#contact" class="btn btn--ghost">Get in touch</a>
+      <div class="hero__sticky">
+        <div class="hero__inner">
+          <p class="hero__status reveal">
+            <span class="hero__status-dot" aria-hidden="true"></span>
+            Available to build
+          </p>
+          <h1 class="hero__name reveal">Nishita&nbsp;Kumari</h1>
+          <p class="hero__tagline reveal">
+            Mathematics &amp; Computing student building at the intersection
+            of code, data and intelligent systems.
+          </p>
+          <div class="hero__cta reveal">
+            <a href="#projects" class="btn btn--primary">View my work</a>
+            <a href="#contact" class="btn btn--ghost">Get in touch</a>
+          </div>
         </div>
+        <a href="#about" class="hero__scroll" id="heroScroll">
+          <span>Scroll</span>
+          <span class="hero__scroll-line" aria-hidden="true"></span>
+        </a>
       </div>
-      <a href="#about" class="hero__scroll">
-        <span>Scroll</span>
-        <span class="hero__scroll-line" aria-hidden="true"></span>
-      </a>
     </section>
 
     <!-- 2. About -->
@@ -88,26 +96,29 @@
         <span class="section__label">About</span>
       </div>
       <div class="about__grid">
-        <p class="about__statement reveal">
-          I'm a computer science student who likes turning vague ideas into
-          software that actually works — and looks like it was meant to.
-        </p>
+        <div class="about__lead reveal">
+          <p class="about__statement">
+            I'm a Mathematics &amp; Computing student who likes turning
+            vague ideas into software that actually works — and looks like
+            it was meant to.
+          </p>
+          <div class="about__tags">
+            <span class="about__tag">Curious by default</span>
+            <span class="about__tag">Building to learn</span>
+          </div>
+        </div>
         <dl class="about__facts reveal">
           <div class="about__fact">
-            <dt>Focus</dt>
-            <dd>Full-stack development &amp; applied AI</dd>
-          </div>
-          <div class="about__fact">
             <dt>Studying</dt>
-            <dd>B.Tech, Computer Science</dd>
+            <dd>Mathematics &amp; Computing</dd>
           </div>
           <div class="about__fact">
             <dt>Interested in</dt>
-            <dd>Product design, machine learning, developer tools</dd>
+            <dd>AI / ML, software development, algorithms, data</dd>
           </div>
           <div class="about__fact">
             <dt>Enjoys building</dt>
-            <dd>Things people actually open twice</dd>
+            <dd>Practical systems people actually use</dd>
           </div>
         </dl>
       </div>
@@ -151,10 +162,8 @@
 
     <!-- 7. Contact -->
     <section class="section contact" id="contact">
-      <p class="contact__eyebrow reveal">Let's talk</p>
-      <h2 class="contact__headline reveal">
-        Have something in mind?<br />I'd like to hear about it.
-      </h2>
+      <p class="contact__eyebrow reveal">What's next</p>
+      <h2 class="contact__headline reveal">Let's build something.</h2>
       <div class="contact__links reveal" id="contactLinks"></div>
     </section>
 
