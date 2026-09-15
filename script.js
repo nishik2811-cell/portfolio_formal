@@ -131,6 +131,70 @@ renderContact();
 const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 // ---------------------------------------------------------------------------
+// Cinematic section depth — scale/translate/opacity driven by scroll
+// position, for browsers that don't yet support the native CSS
+// `animation-timeline: view()` (see .section / .interlude in styles.css,
+// which handles this with zero JS wherever it's supported). Only runs at
+// all when that native path is unavailable, and never when reduced motion
+// is requested. No blur: it read as a rendering glitch rather than depth,
+// so scale/position/opacity carry the whole effect (matches the CSS path).
+// ---------------------------------------------------------------------------
+
+(function initSectionDepthFallback() {
+  if (window.CSS && CSS.supports && CSS.supports("animation-timeline", "view()")) return;
+  if (prefersReducedMotion) return;
+
+  const targets = document.querySelectorAll(".section, .interlude");
+  if (!targets.length) return;
+
+  let ticking = false;
+
+  function update() {
+    ticking = false;
+    const vh = window.innerHeight;
+
+    targets.forEach((el) => {
+      const strong = el.classList.contains("interlude");
+      const isContact = el.classList.contains("contact");
+      const rect = el.getBoundingClientRect();
+      const mid = rect.top + rect.height / 2;
+      // Triangular falloff: 1 when the section's center sits at the
+      // viewport's center, fading to 0 as that center reaches either edge.
+      // Contact is the last stop on the page, so once it's reached it
+      // should just stay put rather than receding again — never taper
+      // past its own center.
+      const half = vh / 2 + rect.height / 2;
+      const pastCenter = mid <= vh / 2;
+      const progress =
+        isContact && pastCenter ? 1 : Math.max(0, 1 - Math.abs(mid - vh / 2) / half);
+      const sign = mid > vh / 2 ? 1 : -1; // not yet centered vs. past center
+
+      const minScale = strong ? 0.65 : 0.76;
+      const minOpacity = strong ? 0.15 : 0.28;
+      const maxShift = strong ? 8 : 6;
+
+      const scale = minScale + progress * (1 - minScale);
+      const opacity = minOpacity + progress * (1 - minOpacity);
+      const shift = (1 - progress) * maxShift * sign;
+
+      el.style.transform = `scale(${scale.toFixed(3)}) translateY(${shift.toFixed(2)}vh)`;
+      el.style.opacity = opacity.toFixed(3);
+    });
+  }
+
+  function onScroll() {
+    if (!ticking) {
+      ticking = true;
+      requestAnimationFrame(update);
+    }
+  }
+
+  window.addEventListener("scroll", onScroll, { passive: true });
+  window.addEventListener("resize", onScroll, { passive: true });
+  update();
+})();
+
+// ---------------------------------------------------------------------------
 // Navigation — solid background on scroll, active-section indicator, mobile
 // menu toggle.
 // ---------------------------------------------------------------------------

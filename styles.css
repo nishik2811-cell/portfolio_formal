@@ -97,11 +97,11 @@ a {
      scene off. This keeps the top fully visible and only trims the bottom. */
   object-position: 50% 0%;
   z-index: -4;
-  /* Muted and softened so the footage reads as atmosphere/lighting rather
-     than a crisp anime illustration sitting behind the content. Brightness
-     is the one part that shifts per section (see body[data-scene] above);
-     it's a single eased transition on scene change, not a per-frame cost. */
-  filter: saturate(0.55) brightness(var(--video-brightness, 0.6)) contrast(1.05) blur(1px);
+  /* Muted so the footage reads as atmosphere/lighting rather than a crisp
+     anime illustration sitting behind the content. Brightness is the one
+     part that shifts per section (see body[data-scene] above); it's a
+     single eased transition on scene change, not a per-frame cost. */
+  filter: saturate(0.55) brightness(var(--video-brightness, 0.6)) contrast(1.05);
   transition: filter 1s var(--ease);
 }
 
@@ -187,7 +187,6 @@ a {
 
 .nav.is-solid {
   background: rgba(5, 7, 13, 0.82);
-  backdrop-filter: blur(10px);
   border-bottom-color: var(--line);
 }
 
@@ -343,12 +342,10 @@ a {
   from {
     opacity: 0;
     transform: translateY(18px);
-    filter: blur(6px);
   }
   to {
     opacity: 1;
     transform: translateY(0);
-    filter: blur(0);
   }
 }
 
@@ -377,7 +374,6 @@ a {
   padding: 0.4rem 0.9rem 0.4rem 0.7rem;
   border: 1px solid var(--line-strong);
   border-radius: 999px;
-  backdrop-filter: blur(6px);
 }
 
 .hero__status-dot {
@@ -542,33 +538,120 @@ a {
      height at narrow viewports (--section-space's minimum is smaller than
      12vw there), letting the heading land partly behind the nav. */
   scroll-margin-top: 5.5rem;
+  /* Anchors the zoom to the section's top edge instead of its center
+     (the default) — sections run 500-1250px tall, and scaling that from
+     the center makes the heading (sitting right at the top) travel a
+     large chunk of that height on its own, on top of the translateY,
+     reading as if it starts small down near the middle of the section
+     and rises into place. Pinning the origin to the top keeps the
+     heading essentially still; the visible growth happens below it,
+     where the content actually needs to arrive. */
+  transform-origin: top center;
 }
 
-/* Each section breathes in and out as it crosses the viewport — full size
-   at its most-in-view point, slightly smaller entering and leaving —
-   using the browser's native scroll-linked animations rather than a
-   scroll listener: it's driven straight off scroll position (so it
-   reverses cleanly scrolling back up, not just a one-shot reveal) and
-   costs nothing in JS. Unsupported browsers (no @supports match) simply
-   render sections at their normal scale — a silent, harmless fallback. */
+/* Cinematic depth: each section zooms in over its whole entry (the entire
+   scroll distance it takes to arrive), holds at full scale while it's the
+   one in view, then zooms back out over its whole exit — driven by the
+   browser's native scroll-linked animations, not a scroll listener, so
+   it's continuous and reverses cleanly scrolling back up. Entry and exit
+   are two separate animations/timelines rather than one keyframe spread
+   across "cover": tying zoom-in to a single combined enter+leave range
+   left it compressed into the sliver of scroll where the section is still
+   mostly clipped by the viewport edge, so it registered as an obvious
+   shrink on the way out but a barely-there flicker on the way in. Splitting
+   them gives the zoom-in the entire entry distance to play out, so it's
+   just as visible as the zoom-out. No blur — it read as a rendering
+   glitch on text rather than a depth cue, so scale/translate/opacity
+   carry the whole effect. Only transform and opacity move — compositor-
+   only, nothing here touches layout. Unsupported browsers (no @supports
+   match) fall back to the JS-driven version below (initSectionDepthFallback
+   in script.js); both respect prefers-reduced-motion (further down). */
 @supports (animation-timeline: view()) {
-  .section,
+  /* fill-mode is "forwards", deliberately not "both": with two animations
+     sharing one property, a filled-but-inactive animation still outranks
+     an actively-animating one declared earlier, purely by being later in
+     the list — so a "both"-filled zoom-out sat there holding scale(1)
+     for the *entire* entry phase (since exit hasn't started yet), and
+     because it's listed second it won that tug-of-war outright, hiding
+     zoom-in's real growth the whole time. Dropping the backwards half
+     means zoom-out contributes nothing at all until its own exit range
+     actually begins, so zoom-in's growth is free to show during entry;
+     it still hands off cleanly once exit genuinely starts. Linear timing
+     (not an eased curve) spreads that growth evenly across the whole
+     entry/exit distance instead of front-loading it into an early sliver
+     that reads as a flicker rather than a scroll-linked zoom. Ranges are
+     "cover 0%/50%/100%" rather than the named entry/exit ranges: entry
+     and exit are capped at roughly one viewport height no matter how
+     tall the section is, which read as too quick to register — splitting
+     the section's *entire* scroll-through span (first pixel in to last
+     pixel out) straight down the middle instead gives each half a longer,
+     content-proportional stretch of scroll to play out over. */
+  .section {
+    animation: section-zoom-in linear forwards, section-zoom-out linear forwards;
+    animation-timeline: view(), view();
+    animation-range: cover 0% cover 50%, cover 50% cover 100%;
+  }
+
+  /* The interlude is the one deliberately full-screen, breath-taking beat
+     in the page, so its depth swing is deeper than an ordinary section's. */
   .interlude {
-    animation: section-zoom linear both;
+    animation: section-zoom-in-strong linear forwards,
+      section-zoom-out-strong linear forwards;
+    animation-timeline: view(), view();
+    animation-range: cover 0% cover 50%, cover 50% cover 100%;
+  }
+
+  /* Contact is the last stop on the page — there's no next scene for it
+     to lose ground to, so it only zooms in on approach and then just
+     stays put rather than receding again right as the user arrives. */
+  .contact {
+    animation: section-zoom-in linear forwards;
     animation-timeline: view();
-    animation-range: cover 0% cover 100%;
+    animation-range: cover 0% cover 50%;
   }
 }
 
-@keyframes section-zoom {
-  0% {
-    transform: scale(0.94);
+@keyframes section-zoom-in {
+  from {
+    transform: scale(0.76) translateY(6vh);
+    opacity: 0.28;
   }
-  50% {
-    transform: scale(1);
+  to {
+    transform: scale(1) translateY(0);
+    opacity: 1;
   }
-  100% {
-    transform: scale(0.94);
+}
+
+@keyframes section-zoom-out {
+  from {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: scale(0.76) translateY(-6vh);
+    opacity: 0.28;
+  }
+}
+
+@keyframes section-zoom-in-strong {
+  from {
+    transform: scale(0.65) translateY(8vh);
+    opacity: 0.15;
+  }
+  to {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes section-zoom-out-strong {
+  from {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: scale(0.65) translateY(-8vh);
+    opacity: 0.15;
   }
 }
 
@@ -1124,7 +1207,6 @@ a {
   border: 1px solid var(--line);
   border-radius: 10px;
   background: rgba(5, 7, 13, 0.4);
-  backdrop-filter: blur(6px);
   transition: border-color 0.35s var(--ease), background-color 0.35s var(--ease),
     transform 0.35s var(--ease), box-shadow 0.35s var(--ease);
 }
@@ -1467,8 +1549,7 @@ html.has-custom-cursor button {
 .reveal {
   opacity: 0;
   transform: translateY(16px);
-  filter: blur(4px);
-  transition: opacity 0.7s var(--ease), transform 0.7s var(--ease), filter 0.7s var(--ease);
+  transition: opacity 0.7s var(--ease), transform 0.7s var(--ease);
   /* Elements in a rendered list (project cards, tech-stack rows, timeline
      entries, …) get --stagger-index set inline by script.js, so the group
      cascades in rather than arriving as one flat block. Plain .reveal
@@ -1479,7 +1560,6 @@ html.has-custom-cursor button {
 .reveal.is-visible {
   opacity: 1;
   transform: translateY(0);
-  filter: blur(0);
 }
 
 /* The section-label accent line "draws" in (width, not fade) as its header
@@ -1495,7 +1575,7 @@ html.has-custom-cursor button {
 /* Word-by-word reveal for the site's few big cinematic statements (hero
    name, contact headline, interlude line) — each .reveal-word span stays
    hidden until its wrapper gains .is-visible, then plays the same
-   blur/lift-in used for the hero name, staggered by --i. */
+   fade/lift-in used for the hero name, staggered by --i. */
 .reveal-word {
   display: inline-block;
   opacity: 0;
@@ -1656,6 +1736,7 @@ button:focus-visible {
   .interlude {
     animation: none;
     transform: none;
+    opacity: 1;
   }
 
   /* Specificity note: .word-reveal.is-visible .reveal-word (below, in the
