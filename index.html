@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Nikhil — Portfolio</title>
+  <title>Nishita Kumari — Portfolio</title>
   <meta name="description" content="Personal portfolio — developer, builder, and lifelong learner." />
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -17,9 +17,23 @@
 </head>
 <body>
 
+  <!-- Persistent cinematic video background — fixed behind the whole page,
+       driven by overall scroll progress (see script.js). -->
+  <video
+    class="bg-video"
+    id="bgVideo"
+    src="frieren.mp4"
+    muted
+    playsinline
+    preload="auto"
+    aria-hidden="true"
+    tabindex="-1"
+  ></video>
+  <div class="bg-overlay" aria-hidden="true"></div>
+
   <!-- Navigation -->
   <header class="nav" id="nav">
-    <a href="#home" class="nav__brand">Nikhil</a>
+    <a href="#home" class="nav__brand">Nishita</a>
 
     <nav class="nav__links" aria-label="Primary">
       <a href="#home">Home</a>
@@ -52,7 +66,7 @@
     <section class="hero" id="home">
       <div class="hero__inner">
         <p class="hero__eyebrow">Personal Portfolio</p>
-        <h1 class="hero__name">Nikhil&nbsp;Kumar</h1>
+        <h1 class="hero__name">Nishita&nbsp;Kumari</h1>
         <p class="hero__tagline">
           I build software at the intersection of design, data and
           artificial intelligence — currently studying, always shipping.
@@ -62,30 +76,13 @@
           <a href="#contact" class="btn btn--ghost">Get in touch</a>
         </div>
       </div>
-      <a href="#reel" class="hero__scroll">
+      <a href="#about" class="hero__scroll">
         <span>Scroll</span>
         <span class="hero__scroll-line" aria-hidden="true"></span>
       </a>
     </section>
 
-    <!-- 2. Scroll-controlled video -->
-    <section class="reel" id="reel">
-      <div class="reel__sticky">
-        <video
-          class="reel__video"
-          id="reelVideo"
-          src="frieren.mp4"
-          muted
-          playsinline
-          preload="auto"
-        ></video>
-        <div class="reel__caption">
-          <p>Scroll to move through the story.</p>
-        </div>
-      </div>
-    </section>
-
-    <!-- 3. About -->
+    <!-- 2. About -->
     <section class="section about" id="about">
       <div class="section__head">
         <span class="section__label">About</span>
@@ -116,7 +113,7 @@
       </div>
     </section>
 
-    <!-- 4. Tech Stack -->
+    <!-- 3. Tech Stack -->
     <section class="section stack" id="stack">
       <div class="section__head">
         <span class="section__label">Tech Stack</span>
@@ -125,7 +122,7 @@
       <div class="stack__list" id="stackList"></div>
     </section>
 
-    <!-- 5. Projects -->
+    <!-- 4. Projects -->
     <section class="section projects" id="projects">
       <div class="section__head">
         <span class="section__label">Projects</span>
@@ -134,7 +131,7 @@
       <div class="projects__list" id="projectsList"></div>
     </section>
 
-    <!-- 6. Currently Working On -->
+    <!-- 5. Currently Working On -->
     <section class="section current" id="current">
       <div class="section__head">
         <span class="section__label">Currently Working On</span>
@@ -143,7 +140,7 @@
       <div class="current__list" id="currentList"></div>
     </section>
 
-    <!-- 7. Experience -->
+    <!-- 6. Experience -->
     <section class="section experience" id="experience">
       <div class="section__head">
         <span class="section__label">Experience</span>
@@ -152,7 +149,7 @@
       <div class="experience__list" id="experienceList"></div>
     </section>
 
-    <!-- 8. Contact -->
+    <!-- 7. Contact -->
     <section class="section contact" id="contact">
       <p class="contact__eyebrow reveal">Let's talk</p>
       <h2 class="contact__headline reveal">
@@ -164,7 +161,7 @@
   </main>
 
   <footer class="footer">
-    <p>Nikhil Kumar — built with plain HTML, CSS &amp; JavaScript.</p>
+    <p>Nishita Kumari — built with plain HTML, CSS &amp; JavaScript.</p>
   </footer>
 
   <script src="data.js"></script>

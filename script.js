@@ -139,29 +139,76 @@ const revealObserver = new IntersectionObserver(
 document.querySelectorAll(".reveal").forEach((el) => revealObserver.observe(el));
 
 // ---------------------------------------------------------------------------
-// Scroll-controlled video — scroll position drives video.currentTime while
-// the video stays pinned via CSS position: sticky on its wrapper.
+// Cinematic background video — a single fixed, full-viewport <video> behind
+// the whole page (see .bg-video in styles.css). Overall page scroll drives
+// video.currentTime in three phases:
+//
+//   1. Hero        — scrolling through the hero plays the video's opening.
+//   2. Cinematic beat — a short scroll distance right after the hero where
+//      the video holds close to that opening moment (a small drift, not a
+//      hard freeze) before continuing — the "~1.5s breathing room" beat.
+//   3. Rest of page — About → Contact map across the remainder of the video,
+//      ending near its final frames at Contact.
+//
+// Performance notes (this replaced an earlier version that visibly lagged):
+//   - No getBoundingClientRect() in the hot path. That forces a synchronous
+//     layout on every call; done every animation frame while scrolling, it
+//     was the main source of the stutter. Section heights are measured once
+//     on load/resize instead, and the per-frame math is pure arithmetic on
+//     cached numbers + window.scrollY.
+//   - video.currentTime is only ever written when it would actually change
+//     by a meaningful amount (a fraction of a frame). Writing it on every
+//     wheel/scroll tick — even by thousandths of a second — still asks the
+//     browser to reseek/redecode for no visible difference.
+//   - Scroll events themselves are coalesced into rAF via the `ticking`
+//     flag, so a burst of wheel events collapses into one update per frame.
 // ---------------------------------------------------------------------------
 
-const reelSection = document.getElementById("reel");
-const video = document.getElementById("reelVideo");
+const video = document.getElementById("bgVideo");
 const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
+const HOLD_FRACTION = 0.18; // % of video duration reached by the end of the hero
+const DRIFT_FRACTION = 0.02; // tiny extra progress allowed during the cinematic beat
+const MIN_TIME_DELTA = 1 / 60; // skip writes smaller than this — no visible difference
+
 let duration = 0;
+let heroHeight = window.innerHeight;
+let pausePx = window.innerHeight * 0.6; // scroll distance the "beat" occupies
+let scrollableHeight = 0;
 let ticking = false;
+
+function measure() {
+  const hero = document.getElementById("home");
+  heroHeight = hero ? hero.offsetHeight : window.innerHeight;
+  pausePx = window.innerHeight * 0.6;
+  scrollableHeight = Math.max(document.documentElement.scrollHeight - window.innerHeight, 1);
+}
 
 video.addEventListener("loadedmetadata", () => {
   duration = video.duration || 0;
   onScroll();
 });
 
-function computeProgress() {
-  const rect = reelSection.getBoundingClientRect();
-  const scrollableHeight = reelSection.offsetHeight - window.innerHeight;
-  if (scrollableHeight <= 0) return 0;
-  // rect.top is 0 when the pinned section starts covering the viewport.
-  const raw = -rect.top / scrollableHeight;
-  return Math.min(Math.max(raw, 0), 1);
+function computeTargetTime() {
+  if (!duration) return 0;
+
+  const scrollY = window.scrollY;
+  const holdTime = duration * HOLD_FRACTION;
+  const pauseEnd = heroHeight + pausePx;
+
+  if (scrollY <= heroHeight) {
+    return (scrollY / heroHeight) * holdTime;
+  }
+
+  if (scrollY <= pauseEnd) {
+    const p = (scrollY - heroHeight) / pausePx;
+    return holdTime + p * duration * DRIFT_FRACTION;
+  }
+
+  const startTime = holdTime + duration * DRIFT_FRACTION;
+  const restDistance = Math.max(scrollableHeight - pauseEnd, 1);
+  const p = Math.min((scrollY - pauseEnd) / restDistance, 1);
+  return startTime + p * (duration - startTime);
 }
 
 // Self-perpetuating rAF loop: keeps easing video.currentTime toward the
@@ -173,16 +220,19 @@ function step() {
     ticking = false;
     return;
   }
-  const target = computeProgress() * duration;
+  const target = computeTargetTime();
+  const diff = target - video.currentTime;
 
   if (prefersReducedMotion) {
-    video.currentTime = target;
+    if (Math.abs(diff) > MIN_TIME_DELTA) video.currentTime = target;
     ticking = false;
     return;
   }
 
-  const diff = target - video.currentTime;
-  video.currentTime += diff * 0.2;
+  const next = video.currentTime + diff * 0.2;
+  if (Math.abs(next - video.currentTime) > MIN_TIME_DELTA) {
+    video.currentTime = next;
+  }
 
   if (Math.abs(diff) > 0.02) {
     requestAnimationFrame(step);
@@ -198,5 +248,71 @@ function onScroll() {
   }
 }
 
+function onResize() {
+  measure();
+  onScroll();
+}
+
+measure();
 window.addEventListener("scroll", onScroll, { passive: true });
-window.addEventListener("resize", onScroll);
+window.addEventListener("resize", onResize);
+
+// ---------------------------------------------------------------------------
+// Custom cursor — a small glowing core with a softly trailing aura. Only
+// created at all on fine-pointer (mouse/trackpad) devices, so touch screens
+// never pay for the extra DOM node or the rAF loop.
+// ---------------------------------------------------------------------------
+
+if (window.matchMedia("(pointer: fine)").matches) {
+  const cursor = document.createElement("div");
+  cursor.className = "cursor";
+  cursor.innerHTML = '<div class="cursor__aura"></div><div class="cursor__core"></div>';
+  document.body.appendChild(cursor);
+  document.documentElement.classList.add("has-custom-cursor");
+
+  let targetX = window.innerWidth / 2;
+  let targetY = window.innerHeight / 2;
+  let cursorX = targetX;
+  let cursorY = targetY;
+  let cursorTicking = false;
+
+  window.addEventListener(
+    "pointermove",
+    (e) => {
+      targetX = e.clientX;
+      targetY = e.clientY;
+      if (!cursorTicking) {
+        cursorTicking = true;
+        requestAnimationFrame(renderCursor);
+      }
+    },
+    { passive: true }
+  );
+
+  function renderCursor() {
+    if (prefersReducedMotion) {
+      cursorX = targetX;
+      cursorY = targetY;
+    } else {
+      // Slight inertia — the aura settles a beat behind the raw pointer.
+      cursorX += (targetX - cursorX) * 0.35;
+      cursorY += (targetY - cursorY) * 0.35;
+    }
+    cursor.style.transform = `translate3d(${cursorX}px, ${cursorY}px, 0)`;
+
+    if (Math.abs(targetX - cursorX) > 0.1 || Math.abs(targetY - cursorY) > 0.1) {
+      requestAnimationFrame(renderCursor);
+    } else {
+      cursorTicking = false;
+    }
+  }
+
+  document.addEventListener("mouseover", (e) => {
+    if (e.target.closest("a, button")) cursor.classList.add("is-hovering");
+  });
+  document.addEventListener("mouseout", (e) => {
+    if (e.target.closest("a, button")) cursor.classList.remove("is-hovering");
+  });
+  document.addEventListener("mouseleave", () => cursor.style.opacity = "0");
+  document.addEventListener("mouseenter", () => cursor.style.opacity = "1");
+}

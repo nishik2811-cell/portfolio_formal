@@ -3,13 +3,14 @@
    ========================================================================== */
 
 :root {
-  --bg: #0b0d10;
-  --bg-elevated: #14171b;
-  --text: #e8e6df;
-  --text-dim: #8b8d91;
-  --accent: #b8956a;
-  --line: rgba(232, 230, 223, 0.12);
-  --line-strong: rgba(232, 230, 223, 0.22);
+  --bg: #05070d;
+  --bg-elevated: rgba(159, 196, 232, 0.06);
+  --text: #eef2fa;
+  --text-dim: #8fa1c4;
+  --accent: #9fc6e8;
+  --accent-deep: #3d5d8c;
+  --line: rgba(184, 208, 240, 0.12);
+  --line-strong: rgba(184, 208, 240, 0.24);
 
   --font-display: "Fraunces", Georgia, serif;
   --font-body: "Space Grotesk", "Helvetica Neue", Arial, sans-serif;
@@ -50,7 +51,38 @@ a {
 
 ::selection {
   background: var(--accent);
-  color: #100b06;
+  color: #05070d;
+}
+
+/* ==========================================================================
+   Cinematic background — a fixed video layer sitting behind the entire
+   page, plus a static gradient overlay that keeps content readable without
+   ever fully hiding the footage. Both sit at negative z-index so normal
+   in-flow content (header/main/footer) always paints above them.
+   ========================================================================== */
+
+.bg-video {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: -2;
+}
+
+.bg-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(120% 55% at 50% 0%, rgba(5, 7, 13, 0.1), transparent 60%),
+    linear-gradient(
+      180deg,
+      rgba(5, 7, 13, 0.25) 0%,
+      rgba(5, 7, 13, 0.5) 35%,
+      rgba(5, 7, 13, 0.72) 70%,
+      rgba(5, 7, 13, 0.86) 100%
+    );
 }
 
 /* ==========================================================================
@@ -73,7 +105,7 @@ a {
 }
 
 .nav.is-solid {
-  background: rgba(11, 13, 16, 0.86);
+  background: rgba(5, 7, 13, 0.82);
   backdrop-filter: blur(10px);
   border-bottom-color: var(--line);
 }
@@ -174,6 +206,7 @@ a {
   line-height: 1.05;
   margin: 0 0 1.5rem;
   letter-spacing: -0.01em;
+  text-shadow: 0 4px 40px rgba(5, 7, 13, 0.7);
 }
 
 .hero__tagline {
@@ -182,6 +215,7 @@ a {
   max-width: 38ch;
   margin: 0 0 2.5rem;
   line-height: 1.6;
+  text-shadow: 0 2px 24px rgba(5, 7, 13, 0.6);
 }
 
 .hero__cta {
@@ -254,44 +288,6 @@ a {
 }
 
 /* ==========================================================================
-   Scroll-controlled video reel
-   ========================================================================== */
-
-.reel {
-  position: relative;
-  height: 400vh;
-}
-
-.reel__sticky {
-  position: sticky;
-  top: 0;
-  height: 100vh;
-  height: 100svh;
-  overflow: hidden;
-  background: #000;
-}
-
-.reel__video {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.reel__caption {
-  position: absolute;
-  left: var(--gutter);
-  bottom: 2.5rem;
-  color: var(--text);
-}
-
-.reel__caption p {
-  font-family: var(--font-display);
-  font-size: clamp(1.1rem, 2.5vw, 1.6rem);
-  max-width: 20ch;
-  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.5);
-}
-
-/* ==========================================================================
    Section shell
    ========================================================================== */
 
@@ -315,6 +311,7 @@ a {
 .section__label {
   font-family: var(--font-display);
   font-size: clamp(1.75rem, 3.5vw, 2.5rem);
+  text-shadow: 0 0 28px rgba(159, 198, 232, 0.22);
 }
 
 .section__intro {
@@ -666,6 +663,62 @@ a {
 }
 
 /* ==========================================================================
+   Custom cursor — a small glowing core with a softer trailing aura. Only
+   ever created (in script.js) on fine-pointer devices, so touch never pays
+   for it; this CSS just hides the native cursor while it's active.
+   ========================================================================== */
+
+html.has-custom-cursor,
+html.has-custom-cursor a,
+html.has-custom-cursor button {
+  cursor: none;
+}
+
+.cursor {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 999;
+  pointer-events: none;
+  will-change: transform;
+}
+
+.cursor__aura,
+.cursor__core {
+  position: absolute;
+  top: 0;
+  left: 0;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.cursor__aura {
+  width: 26px;
+  height: 26px;
+  background: radial-gradient(circle, rgba(159, 198, 232, 0.35), transparent 70%);
+  transition: width 0.3s var(--ease), height 0.3s var(--ease);
+}
+
+.cursor__core {
+  width: 6px;
+  height: 6px;
+  background: #eef6ff;
+  box-shadow: 0 0 8px 1px rgba(159, 198, 232, 0.8);
+  transition: width 0.25s var(--ease), height 0.25s var(--ease);
+}
+
+.cursor.is-hovering .cursor__aura {
+  width: 42px;
+  height: 42px;
+  background: radial-gradient(circle, rgba(159, 198, 232, 0.5), transparent 70%);
+}
+
+.cursor.is-hovering .cursor__core {
+  width: 8px;
+  height: 8px;
+}
+
+/* ==========================================================================
    Reveal-on-scroll
    ========================================================================== */
 
@@ -730,10 +783,6 @@ button:focus-visible {
 
   .experience__org {
     text-align: left;
-  }
-
-  .reel {
-    height: 300vh;
   }
 }
 
