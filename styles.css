@@ -1214,12 +1214,19 @@ html.has-custom-cursor button {
 .reveal {
   opacity: 0;
   transform: translateY(16px);
-  transition: opacity 0.7s var(--ease), transform 0.7s var(--ease);
+  filter: blur(4px);
+  transition: opacity 0.7s var(--ease), transform 0.7s var(--ease), filter 0.7s var(--ease);
+  /* Elements in a rendered list (project cards, tech-stack rows, timeline
+     entries, …) get --stagger-index set inline by script.js, so the group
+     cascades in rather than arriving as one flat block. Plain .reveal
+     elements never set it, so this is a no-op for them. */
+  transition-delay: calc(var(--stagger-index, 0) * 0.08s);
 }
 
 .reveal.is-visible {
   opacity: 1;
   transform: translateY(0);
+  filter: blur(0);
 }
 
 /* The section-label accent line "draws" in (width, not fade) as its header
@@ -1230,6 +1237,20 @@ html.has-custom-cursor button {
 
 .reveal-line.is-visible {
   width: 2.5rem;
+}
+
+/* Word-by-word reveal for the site's few big cinematic statements (hero
+   name, contact headline, interlude line) — each .reveal-word span stays
+   hidden until its wrapper gains .is-visible, then plays the same
+   blur/lift-in used for the hero name, staggered by --i. */
+.reveal-word {
+  display: inline-block;
+  opacity: 0;
+}
+
+.word-reveal.is-visible .reveal-word {
+  animation: heroReveal 0.7s var(--ease) forwards;
+  animation-delay: calc(var(--i, 0) * 0.08s);
 }
 
 /* ==========================================================================
@@ -1324,7 +1345,18 @@ button:focus-visible {
   .reveal {
     opacity: 1;
     transform: none;
+    filter: none;
     transition: none;
+  }
+
+  /* Specificity note: .word-reveal.is-visible .reveal-word (below, in the
+     normal-motion rules) is more specific than a bare .reveal-word, so it
+     would otherwise keep winning here and the animation would still run
+     mid-way. !important is the deliberate, narrow fix for that — reduced
+     motion must always win. */
+  .reveal-word {
+    opacity: 1 !important;
+    animation: none !important;
   }
 
   .hero__scroll-line::after,

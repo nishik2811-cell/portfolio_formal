@@ -6,8 +6,8 @@ function renderStack() {
   const root = document.getElementById("stackList");
   root.innerHTML = PORTFOLIO_DATA.techStack
     .map(
-      (group) => `
-      <div class="stack__row reveal">
+      (group, i) => `
+      <div class="stack__row reveal" style="--stagger-index: ${i}">
         <span class="stack__category">${group.category}</span>
         <ul class="stack__items">
           ${group.items
@@ -30,8 +30,8 @@ function renderProjects() {
   const root = document.getElementById("projectsList");
   root.innerHTML = PORTFOLIO_DATA.projects
     .map(
-      (p) => `
-      <article class="project reveal">
+      (p, i) => `
+      <article class="project reveal" style="--stagger-index: ${i}">
         <h3 class="project__name">${p.name}</h3>
         <div class="project__body">
           <p class="project__desc">${p.description}</p>
@@ -54,8 +54,8 @@ function renderCurrent() {
   const root = document.getElementById("currentList");
   root.innerHTML = PORTFOLIO_DATA.currentlyWorking
     .map(
-      (c) => `
-      <div class="current__item reveal">
+      (c, i) => `
+      <div class="current__item reveal" style="--stagger-index: ${i}">
         <span class="current__number">${c.number}</span>
         <div>
           <h3 class="current__title">${c.title}</h3>
@@ -72,8 +72,8 @@ function renderExperience() {
   const root = document.getElementById("experienceList");
   root.innerHTML = PORTFOLIO_DATA.experience
     .map(
-      (e) => `
-      <div class="experience__item reveal">
+      (e, i) => `
+      <div class="experience__item reveal" style="--stagger-index: ${i}">
         <span class="experience__period">${e.period}</span>
         <div>
           <h3 class="experience__role">${e.role}</h3>
@@ -190,7 +190,9 @@ const revealObserver = new IntersectionObserver(
   { threshold: 0.15, rootMargin: "0px 0px -8% 0px" }
 );
 
-document.querySelectorAll(".reveal, .reveal-line").forEach((el) => revealObserver.observe(el));
+document
+  .querySelectorAll(".reveal, .reveal-line, .word-reveal")
+  .forEach((el) => revealObserver.observe(el));
 
 // ---------------------------------------------------------------------------
 // Background video — one persistent <video>, autoplay/loop/muted (see

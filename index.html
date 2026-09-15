@@ -107,27 +107,27 @@
         </div>
       </div>
       <div class="about__grid">
-        <div class="about__lead reveal">
-          <p class="about__statement">
+        <div class="about__lead">
+          <p class="about__statement reveal">
             I'm a Mathematics &amp; Computing student who likes turning
             vague ideas into software that actually works — and looks like
             it was meant to.
           </p>
-          <div class="about__tags">
+          <div class="about__tags reveal" style="--stagger-index: 1">
             <span class="about__tag">Curious by default</span>
             <span class="about__tag">Building to learn</span>
           </div>
         </div>
-        <dl class="about__facts reveal">
-          <div class="about__fact">
+        <dl class="about__facts">
+          <div class="about__fact reveal" style="--stagger-index: 0">
             <dt>Studying</dt>
             <dd>Mathematics &amp; Computing</dd>
           </div>
-          <div class="about__fact">
+          <div class="about__fact reveal" style="--stagger-index: 1">
             <dt>Interested in</dt>
             <dd>AI / ML, software development, algorithms, data</dd>
           </div>
-          <div class="about__fact">
+          <div class="about__fact reveal" style="--stagger-index: 2">
             <dt>Enjoys building</dt>
             <dd>Practical systems people actually use</dd>
           </div>
@@ -140,7 +140,10 @@
          body[data-scene="interlude"] in styles.css) so the scene reads
          clearly for a beat before the site's information density returns. -->
     <section class="interlude" id="interlude">
-      <p class="interlude__text reveal">Still<br />curious.</p>
+      <p class="interlude__text word-reveal">
+        <span class="reveal-word" style="--i: 0">Still</span><br />
+        <span class="reveal-word" style="--i: 1">curious.</span>
+      </p>
     </section>
 
     <!-- 4. Tech Stack -->
@@ -203,7 +206,11 @@
         <span class="section__label-text">Contact</span>
       </div>
       <p class="contact__eyebrow reveal">What's next</p>
-      <h2 class="contact__headline reveal">Let's build something.</h2>
+      <h2 class="contact__headline word-reveal">
+        <span class="reveal-word" style="--i: 0">Let's</span>
+        <span class="reveal-word" style="--i: 1">build</span>
+        <span class="reveal-word" style="--i: 2">something.</span>
+      </h2>
       <div class="contact__links reveal" id="contactLinks"></div>
     </section>
 
