@@ -24,7 +24,8 @@ function renderStack() {
   root.innerHTML = PORTFOLIO_DATA.techStack
     .map(
       (group, i) => `
-      <div class="stack__row reveal" style="--stagger-index: ${i}">
+      <div class="stack__group reveal" style="--stagger-index: ${i}">
+        <span class="stack__index" aria-hidden="true">0${i + 1}</span>
         <span class="stack__category">${group.category}</span>
         <ul class="stack__items">
           ${group.items
@@ -49,6 +50,7 @@ function renderProjects() {
     .map(
       (p, i) => `
       <article class="project reveal" style="--stagger-index: ${i}">
+        <span class="project__index" aria-hidden="true">0${i + 1}</span>
         <h3 class="project__name">${p.name}</h3>
         <div class="project__body">
           <p class="project__desc">${p.description}</p>
@@ -73,13 +75,13 @@ function renderCurrent() {
     .map(
       (c, i) => `
       <div class="current__item reveal" style="--stagger-index: ${i}">
-        <span class="current__number">${c.number}</span>
-        <div>
-          <h3 class="current__title">${c.title}</h3>
-          <span class="current__category">${c.category}</span>
-          <p class="current__desc">${c.description}</p>
+        <div class="current__item-head">
+          <span class="current__number">${c.number}</span>
+          <span class="current__status">${c.status}</span>
         </div>
-        <span class="current__status">${c.status}</span>
+        <h3 class="current__title">${c.title}</h3>
+        <span class="current__category">${c.category}</span>
+        <p class="current__desc">${c.description}</p>
       </div>`
     )
     .join("");
@@ -319,34 +321,44 @@ if (playResult && playResult.catch) playResult.catch(() => {});
     const primary = `rgb(${lerp(TEXT_DARK_SCENE[0], TEXT_BRIGHT_SCENE[0], t)}, ${lerp(TEXT_DARK_SCENE[1], TEXT_BRIGHT_SCENE[1], t)}, ${lerp(TEXT_DARK_SCENE[2], TEXT_BRIGHT_SCENE[2], t)})`;
     const secondary = `rgb(${lerp(SECONDARY_DARK_SCENE[0], SECONDARY_BRIGHT_SCENE[0], t)}, ${lerp(SECONDARY_DARK_SCENE[1], SECONDARY_BRIGHT_SCENE[1], t)}, ${lerp(SECONDARY_DARK_SCENE[2], SECONDARY_BRIGHT_SCENE[2], t)})`;
 
-    // Two shadow layers, always both present, just trading weight with t:
-    // a dark contact shadow (dominant on a bright scene) and a light halo
-    // (dominant on a dark scene). Neither ever drops to zero — a video
-    // frame is rarely one flat tone, so a flat text color alone can lose
-    // contrast against part of a mixed background; keeping a residual of
-    // both gives every letter some edge definition against either a light
-    // or dark patch behind it, not just against the "average" tone.
+    // A video frame is rarely one flat tone — the risky case isn't the
+    // scene's average brightness, it's a *local* patch that's the same
+    // tone as the text itself (dark hair/linework under dark text on an
+    // otherwise bright frame, or a bright highlight under light text on an
+    // otherwise dark one). The rim needed there is the *opposite* tone of
+    // the text: light text gets a dark rim (guards against bright patches),
+    // dark text gets a light rim (guards against dark patches) — so each
+    // strengthens as its matching text tone strengthens, not the other way
+    // around.
     //
     // `ambiguity` peaks at 1 exactly when the sampled brightness sits at
-    // the midpoint — the one case where no text color (light, dark, or
-    // anything between) is guaranteed to contrast well against the whole
-    // sampled region, since it's genuinely a mix of both. That's exactly
-    // when both shadow layers get reinforced, as extra insurance under a
-    // color choice that's necessarily a compromise there.
+    // the midpoint — the one case where no text color is guaranteed to
+    // contrast well against the whole sampled region. Both rims get a
+    // boost there, as extra insurance under a color choice that's
+    // necessarily a compromise.
     const ambiguity = 1 - Math.abs(rawT - 0.5) * 2;
     const shadowY = lerp(0, 2, t);
-    const darkBlur = lerp(26, 16, t) + ambiguity * 6;
-    const darkAlpha = Math.min(1, 0.22 + (0.8 - 0.22) * t + ambiguity * 0.18).toFixed(2);
-    const lightBlur = lerp(10, 22, t) + ambiguity * 6;
-    const lightAlpha = Math.min(1, 0.32 - (0.32 - 0.12) * t + ambiguity * 0.18).toFixed(2);
+    const darkBlur = lerp(10, 6, t) + ambiguity * 4;
+    const darkAlpha = Math.min(1, 0.78 - 0.5 * t + ambiguity * 0.15).toFixed(2);
+    const lightBlur = lerp(6, 12, t) + ambiguity * 4;
+    const lightAlpha = Math.min(1, 0.22 + 0.55 * t + ambiguity * 0.15).toFixed(2);
     const shadow = `0 ${shadowY}px ${darkBlur}px rgba(5, 7, 13, ${darkAlpha}), 0 0 ${lightBlur}px rgba(255, 255, 255, ${lightAlpha})`;
     const secondaryShadow = `0 ${shadowY}px ${Math.round(darkBlur * 0.75)}px rgba(5, 7, 13, ${(darkAlpha * 0.9).toFixed(2)}), 0 0 ${Math.round(lightBlur * 0.75)}px rgba(255, 255, 255, ${(lightAlpha * 0.85).toFixed(2)})`;
+
+    // A crisp 1px stroke backs up the soft blur above with a hard edge —
+    // the blur alone reads as a glow, which isn't enough definition when a
+    // letter sits directly over linework close to the text's own tone.
+    // Picks whichever rim tone the current text needs, strongest exactly
+    // when ambiguity says the blur alone is least trustworthy.
+    const strokeAlpha = (0.4 + ambiguity * 0.3).toFixed(2);
+    const stroke = t < 0.5 ? `rgba(5, 7, 13, ${strokeAlpha})` : `rgba(255, 255, 255, ${strokeAlpha})`;
 
     const root = document.documentElement.style;
     root.setProperty("--hero-text-color", primary);
     root.setProperty("--hero-text-color-secondary", secondary);
     root.setProperty("--hero-text-shadow", shadow);
     root.setProperty("--hero-text-shadow-secondary", secondaryShadow);
+    root.setProperty("--hero-text-stroke", stroke);
   }
 
   sampleAndApply();

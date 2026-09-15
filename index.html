@@ -45,9 +45,9 @@
     <nav class="nav__links" aria-label="Primary">
       <a href="#about">About</a>
       <a href="#education">Education</a>
-      <a href="#stack">Stack</a>
       <a href="#projects">Projects</a>
       <a href="#current">Work</a>
+      <a href="#stack">Stack</a>
       <a href="#contact">Contact</a>
     </nav>
 
@@ -61,10 +61,10 @@
   <nav class="nav-mobile" id="navMobile" aria-label="Mobile">
     <a href="#about">About</a>
     <a href="#education">Education</a>
-    <a href="#stack">Tech Stack</a>
     <a href="#projects">Projects</a>
     <a href="#current">Currently Working On</a>
     <a href="#experience">Experience</a>
+    <a href="#stack">Tech Stack</a>
     <a href="#contact">Contact</a>
     <a href="resume.pdf" target="_blank" rel="noopener">Resume ↗</a>
   </nav>
@@ -121,16 +121,16 @@
             <span class="about__tag">Building to learn</span>
           </div>
         </div>
-        <dl class="about__facts">
-          <div class="about__fact reveal" style="--stagger-index: 0">
+        <dl class="about__stats">
+          <div class="about__stat reveal" style="--stagger-index: 0">
             <dt>Studying</dt>
             <dd>Mathematics &amp; Computing</dd>
           </div>
-          <div class="about__fact reveal" style="--stagger-index: 1">
+          <div class="about__stat reveal" style="--stagger-index: 1">
             <dt>Interested in</dt>
             <dd>AI / ML, software development, algorithms, data</dd>
           </div>
-          <div class="about__fact reveal" style="--stagger-index: 2">
+          <div class="about__stat reveal" style="--stagger-index: 2">
             <dt>Enjoys building</dt>
             <dd>Practical systems people actually use</dd>
           </div>
@@ -138,7 +138,18 @@
       </div>
     </section>
 
-    <!-- 3. Education -->
+    <!-- 3. Cinematic interlude — a deliberate breathing moment. Still the
+         same persistent background video; only the overlay lightens (see
+         body[data-scene="interlude"] in styles.css) so the scene reads
+         clearly for a beat before the site's information density returns. -->
+    <section class="interlude" id="interlude">
+      <p class="interlude__text word-reveal">
+        <span class="reveal-word" style="--i: 0">Still</span><br />
+        <span class="reveal-word" style="--i: 1">curious.</span>
+      </p>
+    </section>
+
+    <!-- 4. Education -->
     <section class="section education" id="education">
       <div class="section__head">
         <div class="section__label">
@@ -150,35 +161,11 @@
       <div class="education__list" id="educationList"></div>
     </section>
 
-    <!-- 4. Cinematic interlude — a deliberate breathing moment. Still the
-         same persistent background video; only the overlay lightens (see
-         body[data-scene="interlude"] in styles.css) so the scene reads
-         clearly for a beat before the site's information density returns. -->
-    <section class="interlude" id="interlude">
-      <p class="interlude__text word-reveal">
-        <span class="reveal-word" style="--i: 0">Still</span><br />
-        <span class="reveal-word" style="--i: 1">curious.</span>
-      </p>
-    </section>
-
-    <!-- 5. Tech Stack -->
-    <section class="section stack" id="stack">
-      <div class="section__head">
-        <div class="section__label">
-          <span class="section__label-num">03</span>
-          <span class="section__label-line reveal-line" aria-hidden="true"></span>
-          <span class="section__label-text">Tech Stack</span>
-        </div>
-        <p class="section__intro reveal">Tools and technologies I reach for most.</p>
-      </div>
-      <div class="stack__list" id="stackList"></div>
-    </section>
-
-    <!-- 6. Projects -->
+    <!-- 5. Projects -->
     <section class="section projects" id="projects">
       <div class="section__head">
         <div class="section__label">
-          <span class="section__label-num">04</span>
+          <span class="section__label-num">03</span>
           <span class="section__label-line reveal-line" aria-hidden="true"></span>
           <span class="section__label-text">Projects</span>
         </div>
@@ -187,11 +174,11 @@
       <div class="projects__list" id="projectsList"></div>
     </section>
 
-    <!-- 7. Currently Working On -->
+    <!-- 6. Currently Working On -->
     <section class="section current" id="current">
       <div class="section__head">
         <div class="section__label">
-          <span class="section__label-num">05</span>
+          <span class="section__label-num">04</span>
           <span class="section__label-line reveal-line" aria-hidden="true"></span>
           <span class="section__label-text">Currently Working On</span>
         </div>
@@ -200,17 +187,30 @@
       <div class="current__list" id="currentList"></div>
     </section>
 
-    <!-- 8. Experience -->
+    <!-- 7. Experience -->
     <section class="section experience" id="experience">
       <div class="section__head">
         <div class="section__label">
-          <span class="section__label-num">06</span>
+          <span class="section__label-num">05</span>
           <span class="section__label-line reveal-line" aria-hidden="true"></span>
           <span class="section__label-text">Experience &amp; Activities</span>
         </div>
         <p class="section__intro reveal">Work, hackathons, clubs and other things I've shown up for.</p>
       </div>
       <div class="experience__list" id="experienceList"></div>
+    </section>
+
+    <!-- 8. Tech Stack -->
+    <section class="section stack" id="stack">
+      <div class="section__head">
+        <div class="section__label">
+          <span class="section__label-num">06</span>
+          <span class="section__label-line reveal-line" aria-hidden="true"></span>
+          <span class="section__label-text">Tech Stack</span>
+        </div>
+        <p class="section__intro reveal">Tools and technologies I reach for most.</p>
+      </div>
+      <div class="stack__list" id="stackList"></div>
     </section>
 
     <!-- 9. Contact -->
