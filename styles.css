@@ -262,18 +262,26 @@ a {
 .nav__toggle {
   display: none;
   flex-direction: column;
+  align-items: center;
+  justify-content: center;
   gap: 5px;
-  width: 28px;
+  /* min-width/height (not the old fixed 28px width) give this a ~44×44 tap
+     target — the recommended minimum touch-target size — while the lines
+     below stay a fixed, smaller visual width; box-sizing is border-box
+     globally, so padding alone would have shrunk the icon instead of
+     growing the hit area. */
+  min-width: 44px;
+  min-height: 44px;
   background: none;
   border: none;
   cursor: pointer;
-  padding: 8px 0;
+  padding: 8px;
 }
 
 .nav__toggle span {
   display: block;
   height: 1px;
-  width: 100%;
+  width: 28px;
   background: var(--text);
   transition: transform 0.3s var(--ease), opacity 0.3s var(--ease);
 }
@@ -1501,6 +1509,38 @@ button:focus-visible {
 
   .experience__org {
     text-align: left;
+  }
+}
+
+/* A phone in landscape is short (~375–430px tall) but the hero's content
+   (status chip + name + tagline + CTAs) is sized for a tall, portrait
+   viewport — vertically centered there, it overflows a short one both
+   upward (the status chip ends up behind the fixed nav) and downward (the
+   scroll hint collides with the CTA buttons). Compact and top-align it
+   instead, and drop the scroll hint — there's no room for a decorative cue
+   when the whole hero barely fits already. */
+@media (max-height: 500px) and (max-width: 900px) {
+  .hero {
+    justify-content: flex-start;
+    padding-top: 6rem;
+    padding-bottom: 1.5rem;
+  }
+
+  .hero__status {
+    margin-bottom: 0.75rem;
+  }
+
+  .hero__name {
+    font-size: clamp(2rem, 6vw, 3rem);
+    margin-bottom: 0.5rem;
+  }
+
+  .hero__tagline {
+    margin-bottom: 1rem;
+  }
+
+  .hero__scroll {
+    display: none;
   }
 }
 
