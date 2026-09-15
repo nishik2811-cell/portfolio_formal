@@ -43,14 +43,15 @@
     <a href="#home" class="nav__brand">Nishita</a>
 
     <nav class="nav__links" aria-label="Primary">
-      <a href="#home">Home</a>
       <a href="#about">About</a>
-      <a href="#stack">Tech Stack</a>
+      <a href="#education">Education</a>
+      <a href="#stack">Stack</a>
       <a href="#projects">Projects</a>
-      <a href="#current">Currently</a>
-      <a href="#experience">Experience</a>
+      <a href="#current">Work</a>
       <a href="#contact">Contact</a>
     </nav>
+
+    <a href="resume.pdf" target="_blank" rel="noopener" class="btn btn--ghost nav__resume">Resume ↗</a>
 
     <button class="nav__toggle" id="navToggle" aria-expanded="false" aria-controls="navMobile" aria-label="Open menu">
       <span></span><span></span><span></span>
@@ -58,13 +59,14 @@
   </header>
 
   <nav class="nav-mobile" id="navMobile" aria-label="Mobile">
-    <a href="#home">Home</a>
     <a href="#about">About</a>
+    <a href="#education">Education</a>
     <a href="#stack">Tech Stack</a>
     <a href="#projects">Projects</a>
     <a href="#current">Currently Working On</a>
     <a href="#experience">Experience</a>
     <a href="#contact">Contact</a>
+    <a href="resume.pdf" target="_blank" rel="noopener">Resume ↗</a>
   </nav>
 
   <main>
@@ -83,12 +85,13 @@
           <span class="hero__name-word" style="--i: 1">Kumari</span>
         </h1>
         <p class="hero__tagline hero-reveal hero-reveal--4">
-          Mathematics &amp; Computing student building at the intersection
-          of code, data and intelligent systems.
+          Second-year B.Tech student in Mathematics &amp; Computing at
+          Jaypee Institute of Information Technology, building at the
+          intersection of code, data and intelligent systems.
         </p>
         <div class="hero__cta hero-reveal hero-reveal--5">
-          <a href="#projects" class="btn btn--primary">View my work</a>
-          <a href="#contact" class="btn btn--ghost">Get in touch</a>
+          <a href="#projects" class="btn btn--primary">Explore work ↓</a>
+          <a href="resume.pdf" target="_blank" rel="noopener" class="btn btn--ghost">View resume ↗</a>
         </div>
       </div>
       <a href="#about" class="hero__scroll hero-reveal hero-reveal--6">
@@ -135,7 +138,19 @@
       </div>
     </section>
 
-    <!-- 3. Cinematic interlude — a deliberate breathing moment. Still the
+    <!-- 3. Education -->
+    <section class="section education" id="education">
+      <div class="section__head">
+        <div class="section__label">
+          <span class="section__label-num">02</span>
+          <span class="section__label-line reveal-line" aria-hidden="true"></span>
+          <span class="section__label-text">Education</span>
+        </div>
+      </div>
+      <div class="education__list" id="educationList"></div>
+    </section>
+
+    <!-- 4. Cinematic interlude — a deliberate breathing moment. Still the
          same persistent background video; only the overlay lightens (see
          body[data-scene="interlude"] in styles.css) so the scene reads
          clearly for a beat before the site's information density returns. -->
@@ -146,11 +161,11 @@
       </p>
     </section>
 
-    <!-- 4. Tech Stack -->
+    <!-- 5. Tech Stack -->
     <section class="section stack" id="stack">
       <div class="section__head">
         <div class="section__label">
-          <span class="section__label-num">02</span>
+          <span class="section__label-num">03</span>
           <span class="section__label-line reveal-line" aria-hidden="true"></span>
           <span class="section__label-text">Tech Stack</span>
         </div>
@@ -159,11 +174,11 @@
       <div class="stack__list" id="stackList"></div>
     </section>
 
-    <!-- 5. Projects -->
+    <!-- 6. Projects -->
     <section class="section projects" id="projects">
       <div class="section__head">
         <div class="section__label">
-          <span class="section__label-num">03</span>
+          <span class="section__label-num">04</span>
           <span class="section__label-line reveal-line" aria-hidden="true"></span>
           <span class="section__label-text">Projects</span>
         </div>
@@ -172,11 +187,11 @@
       <div class="projects__list" id="projectsList"></div>
     </section>
 
-    <!-- 6. Currently Working On -->
+    <!-- 7. Currently Working On -->
     <section class="section current" id="current">
       <div class="section__head">
         <div class="section__label">
-          <span class="section__label-num">04</span>
+          <span class="section__label-num">05</span>
           <span class="section__label-line reveal-line" aria-hidden="true"></span>
           <span class="section__label-text">Currently Working On</span>
         </div>
@@ -185,23 +200,23 @@
       <div class="current__list" id="currentList"></div>
     </section>
 
-    <!-- 7. Experience -->
+    <!-- 8. Experience -->
     <section class="section experience" id="experience">
       <div class="section__head">
         <div class="section__label">
-          <span class="section__label-num">05</span>
+          <span class="section__label-num">06</span>
           <span class="section__label-line reveal-line" aria-hidden="true"></span>
-          <span class="section__label-text">Experience</span>
+          <span class="section__label-text">Experience &amp; Activities</span>
         </div>
         <p class="section__intro reveal">Work, hackathons, clubs and other things I've shown up for.</p>
       </div>
       <div class="experience__list" id="experienceList"></div>
     </section>
 
-    <!-- 8. Contact -->
+    <!-- 9. Contact -->
     <section class="section contact" id="contact">
       <div class="section__label section__label--center reveal">
-        <span class="section__label-num">06</span>
+        <span class="section__label-num">07</span>
         <span class="section__label-line reveal-line" aria-hidden="true"></span>
         <span class="section__label-text">Contact</span>
       </div>
@@ -211,6 +226,10 @@
         <span class="reveal-word" style="--i: 1">build</span>
         <span class="reveal-word" style="--i: 2">something.</span>
       </h2>
+      <div class="contact__cta reveal">
+        <a href="#" class="btn btn--primary" id="contactEmailBtn">Get in touch →</a>
+        <a href="resume.pdf" target="_blank" rel="noopener" class="btn btn--ghost">View resume ↗</a>
+      </div>
       <div class="contact__links reveal" id="contactLinks"></div>
     </section>
 

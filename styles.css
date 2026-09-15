@@ -37,6 +37,7 @@
    lag the scroll-scrubbed version had. */
 body[data-scene="hero"] { --overlay-opacity: 0.38; --video-brightness: 0.72; }
 body[data-scene="about"] { --overlay-opacity: 0.5; --video-brightness: 0.65; }
+body[data-scene="education"] { --overlay-opacity: 0.64; --video-brightness: 0.52; }
 body[data-scene="interlude"] { --overlay-opacity: 0.24; --video-brightness: 0.82; }
 body[data-scene="stack"] { --overlay-opacity: 0.72; --video-brightness: 0.48; }
 body[data-scene="projects"] { --overlay-opacity: 0.62; --video-brightness: 0.54; }
@@ -233,6 +234,16 @@ a {
   transform: scaleX(1);
 }
 
+/* Sized down from the base .btn for a compact navbar; still inherits the
+   ghost border, hover-light, and magnetic pull (.btn in script.js already
+   queries every .btn, this one included). */
+.nav__resume {
+  padding: 0.45rem 1.1rem;
+  font-size: 0.85rem;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
 .nav__toggle {
   display: none;
   flex-direction: column;
@@ -259,9 +270,15 @@ a {
   background: var(--bg);
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  gap: 1.75rem;
-  padding: var(--gutter);
+  justify-content: flex-start;
+  gap: 1.5rem;
+  /* Cleared space for the fixed header (~5.5rem) plus the usual gutter, so
+     the link list never sits under the brand/Resume/toggle row — with 8
+     items now (incl. Resume), a vertically centered list risked spilling
+     up behind the header on shorter screens. overflow-y is a safety net
+     if a future addition still makes the list taller than the viewport. */
+  padding: 6.5rem var(--gutter) var(--gutter);
+  overflow-y: auto;
   transform: translateY(-100%);
   transition: transform 0.4s var(--ease);
 }
@@ -633,6 +650,109 @@ a {
 
 .about__fact dd {
   margin: 0;
+}
+
+/* ==========================================================================
+   Education — a timeline of cards. Same connecting-line/marker pattern as
+   Experience further down the page, but each entry gets its own hover
+   glow/border since these are fewer, higher-weight items.
+   ========================================================================== */
+
+.education__list {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.education__list::before {
+  content: "";
+  position: absolute;
+  left: 10rem;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--line);
+}
+
+.education__item {
+  position: relative;
+  display: grid;
+  grid-template-columns: 9rem 1fr;
+  gap: 1.5rem;
+  padding: 1.5rem 1rem;
+  margin: 0 -1rem;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  transition: border-color 0.35s var(--ease), background-color 0.35s var(--ease),
+    box-shadow 0.35s var(--ease);
+}
+
+.education__item::before {
+  content: "";
+  position: absolute;
+  left: 10rem;
+  top: 2.25rem;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  transform: translate(-50%, -50%);
+  transition: background-color 0.3s var(--ease), box-shadow 0.3s var(--ease);
+}
+
+.education__item:hover {
+  border-color: var(--line-strong);
+  background: var(--bg-elevated);
+  box-shadow: 0 0 40px -10px rgba(175, 199, 255, 0.35);
+}
+
+.education__item:hover::before {
+  background: var(--accent);
+  box-shadow: 0 0 8px 1px rgba(175, 199, 255, 0.7);
+}
+
+.education__period {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  transition: color 0.3s var(--ease);
+}
+
+.education__item:hover .education__period {
+  color: var(--accent);
+}
+
+.education__institution {
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  margin: 0 0 0.35rem;
+  transition: color 0.3s var(--ease);
+}
+
+.education__item:hover .education__institution {
+  color: var(--accent);
+}
+
+.education__degree {
+  color: var(--text-secondary);
+  margin: 0 0 0.75rem;
+  font-size: 0.95rem;
+}
+
+.education__score {
+  display: inline-block;
+  font-size: 0.8rem;
+  color: var(--text-label);
+  padding: 0.3rem 0.8rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  transition: color 0.3s var(--ease), border-color 0.3s var(--ease),
+    text-shadow 0.3s var(--ease);
+}
+
+.education__item:hover .education__score {
+  color: var(--accent);
+  border-color: var(--line-strong);
+  text-shadow: 0 0 12px rgba(175, 199, 255, 0.5);
 }
 
 /* ==========================================================================
@@ -1065,6 +1185,14 @@ a {
   margin: 0 0 3rem;
 }
 
+.contact__cta {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin: 0 0 3rem;
+}
+
 .contact__links {
   display: flex;
   justify-content: center;
@@ -1290,9 +1418,19 @@ button:focus-visible {
   }
 
   .about__fact,
-  .stack__row {
+  .stack__row,
+  .education__item {
     grid-template-columns: 1fr;
     gap: 0.35rem;
+  }
+
+  .education__item {
+    margin: 0;
+  }
+
+  .education__list::before,
+  .education__item::before {
+    display: none;
   }
 
   /* No hover on touch — the note stays visible rather than hidden behind
@@ -1396,6 +1534,11 @@ button:focus-visible {
   .current__item,
   .experience__item,
   .experience__item::before,
+  .education__item,
+  .education__item::before,
+  .education__institution,
+  .education__period,
+  .education__score,
   .btn,
   .btn::before,
   .nav,

@@ -3,34 +3,48 @@
 // nothing else in the codebase needs to change.
 
 const PORTFOLIO_DATA = {
+  education: [
+    {
+      institution: "Jaypee Institute of Information Technology",
+      degree: "B.Tech — Mathematics & Computing",
+      score: "CGPA: XX / 10",
+      period: "2024 — Present",
+    },
+    {
+      institution: "Your School Name",
+      degree: "Senior Secondary",
+      score: "XX%",
+      period: "20XX",
+    },
+  ],
+
   techStack: [
     {
       category: "Languages",
       items: [
         { name: "C++", note: "Systems / DSA" },
-        { name: "Python", note: "ML / Data" },
+        { name: "C", note: "Systems" },
+        { name: "Java", note: "OOP" },
         { name: "JavaScript", note: "Web" },
-      ],
-    },
-    {
-      category: "Web",
-      items: [
         { name: "HTML", note: "Markup" },
         { name: "CSS", note: "Styling" },
-        { name: "React", note: "Frontend" },
       ],
     },
     {
-      category: "Data / ML",
+      category: "AI / ML",
       items: [
-        { name: "NumPy", note: "Numerical computing" },
+        { name: "Machine Learning", note: "Modeling" },
+        { name: "Data Analysis", note: "Insights" },
         { name: "Pandas", note: "Data wrangling" },
-        { name: "Scikit-learn", note: "Modeling" },
+        { name: "NumPy", note: "Numerical computing" },
+        { name: "Scikit-learn", note: "ML" },
       ],
     },
     {
-      category: "Tools",
+      category: "Development",
       items: [
+        { name: "React", note: "Frontend" },
+        { name: "Node.js", note: "Backend" },
         { name: "Git", note: "Version control" },
         { name: "GitHub", note: "Collaboration" },
       ],
@@ -124,4 +138,8 @@ const PORTFOLIO_DATA = {
     github: "https://github.com/",
     linkedin: "https://linkedin.com/in/",
   },
+
+  // Drop your real PDF in the project root at this path — nothing else
+  // needs to change. Every "Resume" link/button on the site points here.
+  resumeUrl: "resume.pdf",
 };

@@ -2,6 +2,23 @@
 // Content rendering — reads PORTFOLIO_DATA (data.js) into the DOM.
 // ---------------------------------------------------------------------------
 
+function renderEducation() {
+  const root = document.getElementById("educationList");
+  root.innerHTML = PORTFOLIO_DATA.education
+    .map(
+      (e, i) => `
+      <div class="education__item reveal" style="--stagger-index: ${i}">
+        <span class="education__period">${e.period}</span>
+        <div class="education__body">
+          <h3 class="education__institution">${e.institution}</h3>
+          <p class="education__degree">${e.degree}</p>
+          <span class="education__score">${e.score}</span>
+        </div>
+      </div>`
+    )
+    .join("");
+}
+
 function renderStack() {
   const root = document.getElementById("stackList");
   root.innerHTML = PORTFOLIO_DATA.techStack
@@ -93,8 +110,12 @@ function renderContact() {
     <a href="${github}" target="_blank" rel="noopener">GitHub</a>
     <a href="${linkedin}" target="_blank" rel="noopener">LinkedIn</a>
   `;
+
+  const emailBtn = document.getElementById("contactEmailBtn");
+  if (emailBtn) emailBtn.href = `mailto:${email}`;
 }
 
+renderEducation();
 renderStack();
 renderProjects();
 renderCurrent();
@@ -146,6 +167,7 @@ const desktopNavLinks = document.querySelectorAll(".nav__links a");
 const sceneForSection = {
   home: "hero",
   about: "about",
+  education: "education",
   interlude: "interlude",
   stack: "stack",
   projects: "projects",
@@ -372,7 +394,7 @@ if (window.matchMedia("(pointer: fine)").matches) {
       const relX = e.clientX - (rect.left + rect.width / 2);
       const relY = e.clientY - (rect.top + rect.height / 2);
       const pull = 0.2;
-      const maxPull = 8;
+      const maxPull = 5;
       const x2 = Math.max(-maxPull, Math.min(maxPull, relX * pull));
       const y2 = Math.max(-maxPull, Math.min(maxPull, relY * pull));
       btn.style.transform = `translate(${x2}px, ${y2}px)`;
