@@ -50,20 +50,24 @@ function renderProjects() {
     .map(
       (p, i) => `
       <article class="project reveal" style="--stagger-index: ${i}">
-        <span class="project__index" aria-hidden="true">0${i + 1}</span>
-        <h3 class="project__name">${p.name}</h3>
-        <div class="project__body">
-          <p class="project__desc">${p.description}</p>
-          ${
-            p.tech.length
-              ? `<ul class="project__tech">${p.tech.map((t) => `<li>${t}</li>`).join("")}</ul>`
-              : ""
-          }
-          <div class="project__links">
-            ${p.github ? `<a href="${p.github}" target="_blank" rel="noopener">Code <span>→</span></a>` : ""}
-            ${p.demo ? `<a href="${p.demo}" target="_blank" rel="noopener">Live demo <span>→</span></a>` : ""}
-          </div>
+        <div class="project__head">
+          <span class="project__index" aria-hidden="true">Project 0${i + 1}</span>
         </div>
+        <h3 class="project__name">${p.name}</h3>
+        <p class="project__desc">${p.description}</p>
+        ${
+          p.tech.length
+            ? `<ul class="project__tech">${p.tech.map((t) => `<li>${t}</li>`).join("")}</ul>`
+            : ""
+        }
+        ${
+          p.github || p.demo
+            ? `<div class="project__links">
+                ${p.github ? `<a href="${p.github}" target="_blank" rel="noopener">Code <span>→</span></a>` : ""}
+                ${p.demo ? `<a href="${p.demo}" target="_blank" rel="noopener">Live demo <span>→</span></a>` : ""}
+              </div>`
+            : ""
+        }
       </article>`
     )
     .join("");
@@ -478,31 +482,29 @@ if (window.matchMedia("(pointer: fine)").matches) {
     { passive: true }
   );
 
-  // Hover states — checks e.relatedTarget so moving between two elements
-  // that share the same closest(".project"/"a, button, ...") ancestor
-  // doesn't flicker the state off and back on.
-  document.addEventListener("mouseover", (e) => {
-    if (e.target.closest(".project")) {
-      aura.classList.add("is-project", "is-hovering");
-      core.classList.add("is-hovering");
-    } else if (e.target.closest("a, button, .stack__item, .about__tag")) {
-      aura.classList.add("is-hovering");
-      core.classList.add("is-hovering");
-    }
-  });
+  // Hover state is fully recomputed from whatever's under the cursor right
+  // now, rather than toggled on/off across separate mouseover/mouseout
+  // listeners — that avoids needing e.relatedTarget containment checks,
+  // and (via the scroll listener below) also covers the case a mouseover
+  // event can't: scrolling the page under a stationary cursor, which
+  // changes what's underneath without firing any mouse event at all and
+  // previously left the "View" bubble stuck on from whatever was last
+  // actually hovered.
+  function syncHoverState(target) {
+    const isProject = !!(target && target.closest(".project"));
+    const isInteractive =
+      isProject || !!(target && target.closest("a, button, .stack__item, .about__tag"));
+    aura.classList.toggle("is-project", isProject);
+    aura.classList.toggle("is-hovering", isInteractive);
+    core.classList.toggle("is-hovering", isInteractive);
+  }
 
-  document.addEventListener("mouseout", (e) => {
-    const project = e.target.closest(".project");
-    if (project && (!e.relatedTarget || !project.contains(e.relatedTarget))) {
-      aura.classList.remove("is-project", "is-hovering");
-      core.classList.remove("is-hovering");
-    }
-    const interactive = e.target.closest("a, button, .stack__item, .about__tag");
-    if (interactive && (!e.relatedTarget || !interactive.contains(e.relatedTarget))) {
-      aura.classList.remove("is-hovering");
-      core.classList.remove("is-hovering");
-    }
-  });
+  document.addEventListener("mouseover", (e) => syncHoverState(e.target));
+  window.addEventListener(
+    "scroll",
+    () => syncHoverState(document.elementFromPoint(targetX, targetY)),
+    { passive: true }
+  );
 
   document.addEventListener("mouseleave", () => {
     core.style.opacity = "0";
