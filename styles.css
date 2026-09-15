@@ -205,6 +205,17 @@ a {
   color: var(--text-label);
 }
 
+/* While the nav is still transparent (top of the hero, before scrolling
+   triggers .is-solid), its links sit directly over the raw video with
+   nothing behind them — so they borrow the same adaptive color the hero
+   text uses instead of a fixed dim tone that can wash out against a bright
+   moment. Once .is-solid lands, the opaque backdrop makes this moot and
+   the plain --text-label above takes back over. */
+.nav:not(.is-solid) .nav__links a {
+  color: var(--hero-text-color-secondary, var(--text-label));
+  transition: color 0.6s ease-out;
+}
+
 .nav__links a {
   position: relative;
   padding-bottom: 4px;
@@ -224,9 +235,13 @@ a {
   transition: transform 0.3s var(--ease);
 }
 
-.nav__links a:hover,
-.nav__links a:focus-visible,
-.nav__links a.is-active {
+/* Matches the `.nav:not(.is-solid) …` selector's specificity above (both
+   are three classes deep) so hover/active still wins by source order —
+   without this, the adaptive rule would keep a hovered nav link dim while
+   the nav is still transparent. */
+.nav .nav__links a:hover,
+.nav .nav__links a:focus-visible,
+.nav .nav__links a.is-active {
   color: var(--text);
 }
 
@@ -345,7 +360,11 @@ a {
   gap: 0.6rem;
   width: fit-content;
   font-size: 0.85rem;
-  color: var(--text-label);
+  /* Same adaptive color as the tagline — this chip only ever appears in
+     the hero, so it can use the variable directly without needing the
+     :not(.is-solid) scoping the nav links need. */
+  color: var(--hero-text-color-secondary, var(--text-label));
+  transition: color 0.6s ease-out;
   margin: 0 0 1.5rem;
   padding: 0.4rem 0.9rem 0.4rem 0.7rem;
   border: 1px solid var(--line-strong);
@@ -467,7 +486,8 @@ a {
   align-items: center;
   gap: 0.75rem;
   font-size: 0.8rem;
-  color: var(--text-label);
+  color: var(--hero-text-color-secondary, var(--text-label));
+  transition: color 0.6s ease-out;
 }
 
 .hero__scroll-line {
@@ -502,6 +522,12 @@ a {
   padding: var(--section-space) var(--gutter);
   max-width: 78rem;
   margin: 0 auto;
+  /* Clears the fixed nav when jumping here via an anchor link (clicking a
+     nav item, or any #hash navigation) — without this, the section's own
+     top padding is the only clearance, which shrinks below the nav's own
+     height at narrow viewports (--section-space's minimum is smaller than
+     12vw there), letting the heading land partly behind the nav. */
+  scroll-margin-top: 5.5rem;
 }
 
 .section__head {
@@ -1549,11 +1575,14 @@ button:focus-visible {
   .hero__name,
   .hero__name-word,
   .hero__tagline,
+  .hero__status,
   .btn,
   .btn::before,
   .nav,
   .nav-mobile,
   .nav__toggle span,
+  .nav__links a,
+  .nav:not(.is-solid) .nav__links a,
   .hero__scroll,
   .stack__item,
   .stack__item::before,
