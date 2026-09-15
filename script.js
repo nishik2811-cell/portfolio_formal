@@ -134,15 +134,32 @@ navMobile.querySelectorAll("a").forEach((link) =>
   link.addEventListener("click", closeMobileNav)
 );
 
-// Highlights the nav link for whichever section currently sits in the
-// vertical center of the viewport — event-driven (IntersectionObserver),
-// not a scroll listener, so it costs nothing between section crossings.
+// Section-driven state — one IntersectionObserver doing two jobs:
+//   1. Highlight the nav link for whichever section is centered in the
+//      viewport.
+//   2. Set body[data-scene="..."] so CSS (see styles.css) can smoothly
+//      adjust the shared video's overlay opacity/brightness per section.
+// Both are event-driven, not scroll listeners — nothing runs between
+// section crossings, which is the main reason this replaced the old
+// scroll-scrubbed version: there is no per-scroll-pixel work left at all.
 const desktopNavLinks = document.querySelectorAll(".nav__links a");
+const sceneForSection = {
+  home: "hero",
+  about: "about",
+  interlude: "interlude",
+  stack: "stack",
+  projects: "projects",
+  current: "current",
+  experience: "experience",
+  contact: "contact",
+};
+
 const sectionObserver = new IntersectionObserver(
   (entries) => {
     entries.forEach((entry) => {
       if (!entry.isIntersecting) return;
       const id = entry.target.id;
+      document.body.dataset.scene = sceneForSection[id] || "";
       desktopNavLinks.forEach((a) => {
         a.classList.toggle("is-active", a.getAttribute("href") === `#${id}`);
       });
@@ -150,13 +167,15 @@ const sectionObserver = new IntersectionObserver(
   },
   { rootMargin: "-45% 0px -45% 0px", threshold: 0 }
 );
-["home", "about", "stack", "projects", "current", "experience", "contact"].forEach((id) => {
+Object.keys(sceneForSection).forEach((id) => {
   const el = document.getElementById(id);
   if (el) sectionObserver.observe(el);
 });
 
 // ---------------------------------------------------------------------------
 // Reveal-on-scroll — one subtle fade/slide-in per element, first time only.
+// Also covers the section-label accent lines (.reveal-line draws its width
+// instead of fading; see styles.css) via the same observer/class toggle.
 // ---------------------------------------------------------------------------
 
 const revealObserver = new IntersectionObserver(
@@ -171,120 +190,19 @@ const revealObserver = new IntersectionObserver(
   { threshold: 0.15, rootMargin: "0px 0px -8% 0px" }
 );
 
-document.querySelectorAll(".reveal").forEach((el) => revealObserver.observe(el));
+document.querySelectorAll(".reveal, .reveal-line").forEach((el) => revealObserver.observe(el));
 
 // ---------------------------------------------------------------------------
-// Cinematic hero video — a single fixed, full-viewport <video> behind the
-// whole page (see .bg-video in styles.css). Only the HERO's own scroll track
-// scrubs it; once the user scrolls past the hero, the video hands off to
-// normal looping playback and is never touched by scroll again.
-//
-//   1. Hero   — scrolling through the hero's tall track (.hero, 240vh) plays
-//               the video's first HERO_TIME_FRACTION, eased with easeOutCubic
-//               so motion is quickest early and settles near the end — the
-//               "cinematic breathing" beat the brief asked for, expressed as
-//               a curve rather than a separate freeze step.
-//   2. Rest   — past the hero, video.currentTime is never written again; the
-//               video just plays (and loops) natively in the background.
-//
-// Performance: no getBoundingClientRect() in the scroll hot path (hero
-// height is measured once on load/resize); video.currentTime is only ever
-// written when the change is bigger than a fraction of a frame; scroll
-// events coalesce into a single requestAnimationFrame via `ticking`.
+// Background video — one persistent <video>, autoplay/loop/muted (see
+// index.html). It is never paused, seeked, or re-mounted; script.js does not
+// touch it at all beyond this one defensive play() in case autoplay was
+// blocked. Its visual prominence changes only via CSS (opacity/filter driven
+// by body[data-scene] above) — never via playback state.
 // ---------------------------------------------------------------------------
 
 const video = document.getElementById("bgVideo");
-const heroEl = document.getElementById("home");
-const heroScrollHint = document.getElementById("heroScroll");
-
-const HERO_TIME_FRACTION = 0.25; // the hero uses roughly the first quarter of the video
-const MIN_TIME_DELTA = 1 / 60; // skip writes smaller than this — no visible difference
-
-let duration = 0;
-let heroHeight = window.innerHeight;
-let isScrubbing = true;
-let ticking = false;
-
-function measure() {
-  heroHeight = heroEl ? heroEl.offsetHeight : window.innerHeight;
-}
-
-function easeOutCubic(x) {
-  return 1 - Math.pow(1 - x, 3);
-}
-
-video.addEventListener("loadedmetadata", () => {
-  duration = video.duration || 0;
-  onScroll();
-});
-
-function heroProgress() {
-  return Math.min(Math.max(window.scrollY / heroHeight, 0), 1);
-}
-
-function setScrubUI(p) {
-  // Hide the scroll hint mid-scrub, bring it back near the end as a cue
-  // that the site is about to open up.
-  heroScrollHint.classList.toggle("is-mid", p > 0.08 && p < 0.85);
-}
-
-function scrubStep() {
-  if (!duration) {
-    ticking = false;
-    return;
-  }
-  const p = heroProgress();
-  setScrubUI(p);
-  const target = easeOutCubic(p) * HERO_TIME_FRACTION * duration;
-  const diff = target - video.currentTime;
-
-  if (prefersReducedMotion) {
-    if (Math.abs(diff) > MIN_TIME_DELTA) video.currentTime = target;
-    ticking = false;
-    return;
-  }
-
-  const next = video.currentTime + diff * 0.22;
-  if (Math.abs(next - video.currentTime) > MIN_TIME_DELTA) {
-    video.currentTime = next;
-  }
-
-  if (Math.abs(diff) > 0.02) {
-    requestAnimationFrame(scrubStep);
-  } else {
-    ticking = false;
-  }
-}
-
-function syncVideoMode() {
-  const inHero = window.scrollY < heroHeight;
-  if (inHero && !isScrubbing) {
-    isScrubbing = true;
-    video.pause();
-  } else if (!inHero && isScrubbing) {
-    isScrubbing = false;
-    video.loop = true;
-    const playResult = video.play();
-    if (playResult && playResult.catch) playResult.catch(() => {});
-  }
-}
-
-function onScroll() {
-  syncVideoMode();
-  if (isScrubbing && !ticking) {
-    ticking = true;
-    requestAnimationFrame(scrubStep);
-  }
-}
-
-function onResize() {
-  measure();
-  onScroll();
-}
-
-measure();
-window.addEventListener("scroll", onScroll, { passive: true });
-window.addEventListener("resize", onResize);
+const playResult = video.play();
+if (playResult && playResult.catch) playResult.catch(() => {});
 
 // ---------------------------------------------------------------------------
 // Atmosphere — a handful of CSS-only twinkling stars. Generated once here,
@@ -319,7 +237,9 @@ if (window.matchMedia("(pointer: fine)").matches) {
   const aura = document.createElement("div");
   aura.className = "cursor-aura";
   aura.innerHTML = '<span class="cursor-aura__label">View</span>';
-  document.body.append(core, aura);
+  const spark = document.createElement("div");
+  spark.className = "cursor-spark";
+  document.body.append(core, aura, spark);
   document.documentElement.classList.add("has-custom-cursor");
 
   const bgLight = document.getElementById("bgLight");
@@ -332,6 +252,8 @@ if (window.matchMedia("(pointer: fine)").matches) {
   let coreY = targetY;
   let auraX = targetX;
   let auraY = targetY;
+  let sparkX = targetX;
+  let sparkY = targetY;
   let cursorTicking = false;
 
   function renderCursor() {
@@ -340,17 +262,23 @@ if (window.matchMedia("(pointer: fine)").matches) {
       coreY = targetY;
       auraX = targetX;
       auraY = targetY;
+      sparkX = targetX;
+      sparkY = targetY;
     } else {
-      // Core tracks tightly; the aura settles in a beat behind it, giving
-      // the trailing "energy particle" feel without spawning extra nodes.
+      // Core tracks tightly; the aura settles in a beat behind it; the
+      // spark lags furthest — three fixed elements, no per-frame allocation,
+      // reading as a small trailing afterimage rather than a rigid dot.
       coreX += (targetX - coreX) * 0.55;
       coreY += (targetY - coreY) * 0.55;
       auraX += (targetX - auraX) * 0.18;
       auraY += (targetY - auraY) * 0.18;
+      sparkX += (targetX - sparkX) * 0.09;
+      sparkY += (targetY - sparkY) * 0.09;
     }
 
     core.style.transform = `translate3d(${coreX}px, ${coreY}px, 0) translate(-50%, -50%)`;
     aura.style.transform = `translate3d(${auraX}px, ${auraY}px, 0) translate(-50%, -50%)`;
+    spark.style.transform = `translate3d(${sparkX}px, ${sparkY}px, 0) translate(-50%, -50%)`;
     document.documentElement.style.setProperty("--mx", `${targetX}px`);
     document.documentElement.style.setProperty("--my", `${targetY}px`);
 
@@ -364,7 +292,9 @@ if (window.matchMedia("(pointer: fine)").matches) {
       Math.abs(targetX - coreX) < 0.1 &&
       Math.abs(targetY - coreY) < 0.1 &&
       Math.abs(targetX - auraX) < 0.1 &&
-      Math.abs(targetY - auraY) < 0.1;
+      Math.abs(targetY - auraY) < 0.1 &&
+      Math.abs(targetX - sparkX) < 0.1 &&
+      Math.abs(targetY - sparkY) < 0.1;
 
     if (!settled) {
       requestAnimationFrame(renderCursor);
@@ -416,30 +346,40 @@ if (window.matchMedia("(pointer: fine)").matches) {
   document.addEventListener("mouseleave", () => {
     core.style.opacity = "0";
     aura.style.opacity = "0";
+    spark.style.opacity = "0";
   });
   document.addEventListener("mouseenter", () => {
     core.style.opacity = "1";
     aura.style.opacity = "1";
+    spark.style.opacity = "1";
   });
 
-  // Magnetic buttons — a small, damped pull toward the pointer.
-  if (!prefersReducedMotion) {
-    document.querySelectorAll(".btn").forEach((btn) => {
-      btn.addEventListener("mousemove", (e) => {
-        const rect = btn.getBoundingClientRect();
-        const relX = e.clientX - (rect.left + rect.width / 2);
-        const relY = e.clientY - (rect.top + rect.height / 2);
-        const pull = 0.2;
-        const maxPull = 8;
-        const x = Math.max(-maxPull, Math.min(maxPull, relX * pull));
-        const y = Math.max(-maxPull, Math.min(maxPull, relY * pull));
-        btn.style.transform = `translate(${x}px, ${y}px)`;
-      });
-      btn.addEventListener("mouseleave", () => {
-        btn.style.transform = "";
-      });
+  // Buttons: a small magnetic pull toward the pointer, plus a local light
+  // (--mx/--my, consumed by .btn::before) that follows the cursor within
+  // the button's own bounds.
+  document.querySelectorAll(".btn").forEach((btn) => {
+    let rect = null;
+    btn.addEventListener("mousemove", (e) => {
+      rect = rect || btn.getBoundingClientRect();
+      const x = ((e.clientX - rect.left) / rect.width) * 100;
+      const y = ((e.clientY - rect.top) / rect.height) * 100;
+      btn.style.setProperty("--mx", `${x}%`);
+      btn.style.setProperty("--my", `${y}%`);
+
+      if (prefersReducedMotion) return;
+      const relX = e.clientX - (rect.left + rect.width / 2);
+      const relY = e.clientY - (rect.top + rect.height / 2);
+      const pull = 0.2;
+      const maxPull = 8;
+      const x2 = Math.max(-maxPull, Math.min(maxPull, relX * pull));
+      const y2 = Math.max(-maxPull, Math.min(maxPull, relY * pull));
+      btn.style.transform = `translate(${x2}px, ${y2}px)`;
     });
-  }
+    btn.addEventListener("mouseleave", () => {
+      rect = null;
+      btn.style.transform = "";
+    });
+  });
 
   // Per-card mouse-follow light on project cards. Rect is cached on enter
   // rather than re-measured every mousemove.

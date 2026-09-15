@@ -4,11 +4,16 @@
 
 :root {
   --bg: #05070d;
-  --bg-elevated: rgba(159, 196, 232, 0.06);
-  --text: #eef2fa;
-  --text-dim: #8fa1c4;
-  --accent: #9fc6e8;
-  --accent-deep: #3d5d8c;
+  --bg-elevated: rgba(175, 199, 255, 0.06);
+
+  /* Typographic color system — five tiers instead of one flat "dim" color,
+     so hierarchy comes from color as well as size/weight. */
+  --text: #f3f5f7; /* primary headings */
+  --text-secondary: #b8c7d9; /* body copy, descriptions */
+  --accent: #afc7ff; /* accent text, icons, active states — icy blue → lavender */
+  --text-label: #7f9bc0; /* small labels, eyebrows, nav */
+  --text-muted: #71809a; /* metadata: dates, categories, footer */
+
   --line: rgba(184, 208, 240, 0.12);
   --line-strong: rgba(184, 208, 240, 0.24);
 
@@ -18,7 +23,26 @@
   --gutter: clamp(1.5rem, 5vw, 4rem);
   --section-space: clamp(5rem, 12vw, 9rem);
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* Per-scene video/overlay treatment — overridden by body[data-scene="..."]
+     below. Content-heavy sections get a stronger overlay and a dimmer video;
+     the hero and the cinematic interlude let it breathe. */
+  --overlay-opacity: 0.6;
+  --video-brightness: 0.6;
 }
+
+/* One shared video, one shared overlay — only these two variables change as
+   script.js updates body[data-scene] on section-enter (IntersectionObserver).
+   Nothing here touches playback, so there is nothing to cause the seeking
+   lag the scroll-scrubbed version had. */
+body[data-scene="hero"] { --overlay-opacity: 0.38; --video-brightness: 0.72; }
+body[data-scene="about"] { --overlay-opacity: 0.5; --video-brightness: 0.65; }
+body[data-scene="interlude"] { --overlay-opacity: 0.24; --video-brightness: 0.82; }
+body[data-scene="stack"] { --overlay-opacity: 0.72; --video-brightness: 0.48; }
+body[data-scene="projects"] { --overlay-opacity: 0.62; --video-brightness: 0.54; }
+body[data-scene="current"] { --overlay-opacity: 0.68; --video-brightness: 0.5; }
+body[data-scene="experience"] { --overlay-opacity: 0.68; --video-brightness: 0.5; }
+body[data-scene="contact"] { --overlay-opacity: 0.42; --video-brightness: 0.68; }
 
 * {
   box-sizing: border-box;
@@ -67,16 +91,25 @@ a {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  /* Anchor the crop to the top of the frame — the video is taller/narrower
+     than most viewports, and a center crop was cutting the top of the
+     scene off. This keeps the top fully visible and only trims the bottom. */
+  object-position: 50% 0%;
   z-index: -4;
   /* Muted and softened so the footage reads as atmosphere/lighting rather
-     than a crisp anime illustration sitting behind the content. */
-  filter: saturate(0.55) brightness(0.6) contrast(1.05) blur(1px);
+     than a crisp anime illustration sitting behind the content. Brightness
+     is the one part that shifts per section (see body[data-scene] above);
+     it's a single eased transition on scene change, not a per-frame cost. */
+  filter: saturate(0.55) brightness(var(--video-brightness, 0.6)) contrast(1.05) blur(1px);
+  transition: filter 1s var(--ease);
 }
 
 .bg-overlay {
   position: fixed;
   inset: 0;
   z-index: -3;
+  opacity: var(--overlay-opacity, 0.6);
+  transition: opacity 1s var(--ease);
   background:
     radial-gradient(120% 55% at 50% 0%, rgba(5, 7, 13, 0.1), transparent 60%),
     linear-gradient(
@@ -122,8 +155,8 @@ a {
   opacity: 0;
   transition: opacity 0.4s var(--ease);
   background: radial-gradient(
-    600px circle at var(--mx, 50%) var(--my, 50%),
-    rgba(159, 198, 232, 0.08),
+    700px circle at var(--mx, 50%) var(--my, 50%),
+    rgba(175, 199, 255, 0.08),
     transparent 70%
   );
 }
@@ -168,7 +201,7 @@ a {
   display: flex;
   gap: clamp(1.25rem, 2vw, 2rem);
   font-size: 0.9rem;
-  color: var(--text-dim);
+  color: var(--text-label);
 }
 
 .nav__links a {
@@ -246,20 +279,12 @@ a {
    Hero
    ========================================================================== */
 
-/* The hero is a tall scroll track (see script.js HERO_SCROLL_VH); its inner
-   content stays pinned via position: sticky while that extra height gives
-   the scroll-scrubbed video room to breathe before handing off to normal
-   playback. */
+/* A normal full-height section — no scroll-track, no scroll-jacking. The
+   video behind it is the same persistent element used everywhere else. */
 .hero {
   position: relative;
-  height: 240vh;
-}
-
-.hero__sticky {
-  position: sticky;
-  top: 0;
-  height: 100vh;
-  height: 100svh;
+  min-height: 100vh;
+  min-height: 100svh;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -271,13 +296,39 @@ a {
   max-width: 46rem;
 }
 
+/* Staged entrance on load: each element fades/lifts in with its own delay,
+   so the hero reveals in sequence rather than appearing all at once. Pure
+   CSS — no scroll listener, no JS timing. */
+@keyframes heroReveal {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+    filter: blur(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+.hero-reveal {
+  opacity: 0;
+  animation: heroReveal 0.9s var(--ease) forwards;
+}
+
+.hero-reveal--1 { animation-delay: 0.05s; }
+.hero-reveal--4 { animation-delay: 0.55s; }
+.hero-reveal--5 { animation-delay: 0.7s; }
+.hero-reveal--6 { animation-delay: 1s; }
+
 .hero__status {
   display: inline-flex;
   align-items: center;
   gap: 0.6rem;
   width: fit-content;
   font-size: 0.85rem;
-  color: var(--text-dim);
+  color: var(--text-label);
   margin: 0 0 1.5rem;
   padding: 0.4rem 0.9rem 0.4rem 0.7rem;
   border: 1px solid var(--line-strong);
@@ -290,7 +341,7 @@ a {
   height: 7px;
   border-radius: 50%;
   background: var(--accent);
-  box-shadow: 0 0 8px 1px rgba(159, 198, 232, 0.7);
+  box-shadow: 0 0 8px 1px rgba(175, 199, 255, 0.7);
   animation: statusPulse 2.4s ease-in-out infinite;
 }
 
@@ -309,9 +360,16 @@ a {
   text-shadow: 0 4px 40px rgba(5, 7, 13, 0.7);
 }
 
+.hero__name-word {
+  display: inline-block;
+  opacity: 0;
+  animation: heroReveal 0.8s var(--ease) forwards;
+  animation-delay: calc(0.25s + var(--i) * 0.15s);
+}
+
 .hero__tagline {
   font-size: clamp(1rem, 1.5vw, 1.25rem);
-  color: var(--text-dim);
+  color: var(--text-secondary);
   max-width: 38ch;
   margin: 0 0 2.5rem;
   line-height: 1.6;
@@ -325,13 +383,33 @@ a {
 }
 
 .btn {
+  position: relative;
   display: inline-flex;
   align-items: center;
   padding: 0.85rem 1.75rem;
   font-size: 0.95rem;
   border-radius: 2px;
+  overflow: hidden;
   transition: background-color 0.3s var(--ease), border-color 0.3s var(--ease),
     color 0.3s var(--ease), transform 0.2s var(--ease);
+}
+
+.btn::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    120px circle at var(--mx, 50%) var(--my, 50%),
+    rgba(175, 199, 255, 0.35),
+    transparent 70%
+  );
+  opacity: 0;
+  transition: opacity 0.3s var(--ease);
+  pointer-events: none;
+}
+
+.btn:hover::before {
+  opacity: 1;
 }
 
 .btn:active {
@@ -365,16 +443,7 @@ a {
   align-items: center;
   gap: 0.75rem;
   font-size: 0.8rem;
-  color: var(--text-dim);
-  opacity: 1;
-  transition: opacity 0.5s var(--ease);
-}
-
-/* Faded while the hero's cinematic scrub is underway; script.js brings it
-   back near the end of the hero as a cue that the site is about to open up. */
-.hero__scroll.is-mid {
-  opacity: 0;
-  pointer-events: none;
+  color: var(--text-label);
 }
 
 .hero__scroll-line {
@@ -423,14 +492,74 @@ a {
 }
 
 .section__label {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.section__label--center {
+  justify-content: center;
+  margin-bottom: 1.25rem;
+}
+
+.section__label-num {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  color: var(--text-label);
+}
+
+.section__label-line {
+  width: 2.5rem;
+  height: 1px;
+  background: var(--accent);
+  transition: width 0.4s var(--ease);
+}
+
+/* A small discoverable detail: hovering the section header extends the
+   line. The extra `.reveal-line` in the selector keeps this winning over
+   the entrance rule below regardless of source order (both are otherwise
+   equal specificity). */
+.section__head:hover .section__label-line.reveal-line,
+.section__label--center:hover .section__label-line.reveal-line {
+  width: 4rem;
+}
+
+.section__label-text {
   font-family: var(--font-display);
   font-size: clamp(1.75rem, 3.5vw, 2.5rem);
-  text-shadow: 0 0 28px rgba(159, 198, 232, 0.22);
+  color: var(--text);
+  text-shadow: 0 0 28px rgba(175, 199, 255, 0.22);
 }
 
 .section__intro {
-  color: var(--text-dim);
+  color: var(--text-secondary);
   font-size: 1rem;
+  margin: 0;
+}
+
+/* ==========================================================================
+   Cinematic interlude — after About, before Tech Stack. Same persistent
+   background video; only the overlay (see body[data-scene="interlude"])
+   lightens so this reads as a deliberate visual breathing moment rather
+   than an empty gap.
+   ========================================================================== */
+
+.interlude {
+  min-height: 70vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--section-space) var(--gutter);
+  text-align: center;
+}
+
+.interlude__text {
+  font-family: var(--font-display);
+  font-weight: 340;
+  font-size: clamp(2.25rem, 6vw, 4rem);
+  line-height: 1.15;
+  color: var(--text);
+  text-shadow: 0 4px 40px rgba(5, 7, 13, 0.6);
   margin: 0;
 }
 
@@ -467,7 +596,7 @@ a {
 
 .about__tag {
   font-size: 0.8rem;
-  color: var(--text-dim);
+  color: var(--text-label);
   padding: 0.45rem 0.9rem;
   border: 1px solid var(--line);
   border-radius: 999px;
@@ -498,7 +627,7 @@ a {
 }
 
 .about__fact dt {
-  color: var(--text-dim);
+  color: var(--text-label);
   font-size: 0.9rem;
 }
 
@@ -531,7 +660,7 @@ a {
 .stack__category {
   font-family: var(--font-display);
   font-size: 1.1rem;
-  color: var(--text-dim);
+  color: var(--text-label);
 }
 
 .stack__items {
@@ -544,15 +673,29 @@ a {
 }
 
 .stack__item {
+  position: relative;
   display: flex;
   align-items: baseline;
   gap: 0.5rem;
   font-size: 1.05rem;
-  padding: 0.4rem 0.9rem;
+  padding: 0.4rem 0.9rem 0.4rem 1.4rem;
   border: 1px solid transparent;
   border-radius: 999px;
   transition: color 0.25s var(--ease), border-color 0.25s var(--ease),
     transform 0.25s var(--ease);
+}
+
+.stack__item::before {
+  content: "";
+  position: absolute;
+  left: 0.6rem;
+  top: 50%;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--accent);
+  transform: translateY(-50%) scale(0);
+  transition: transform 0.25s var(--ease);
 }
 
 .stack__item:hover,
@@ -562,9 +705,14 @@ a {
   transform: translateY(-2px);
 }
 
+.stack__item:hover::before,
+.stack__item:focus-visible::before {
+  transform: translateY(-50%) scale(1);
+}
+
 .stack__note {
   font-size: 0.75rem;
-  color: var(--text-dim);
+  color: var(--text-muted);
   max-width: 0;
   overflow: hidden;
   white-space: nowrap;
@@ -606,7 +754,7 @@ a {
   inset: 0;
   background: radial-gradient(
     360px circle at var(--mx, 50%) var(--my, 50%),
-    rgba(159, 198, 232, 0.08),
+    rgba(175, 199, 255, 0.08),
     transparent 65%
   );
   opacity: 0;
@@ -646,7 +794,7 @@ a {
 }
 
 .project__desc {
-  color: var(--text-dim);
+  color: var(--text-secondary);
   max-width: 52ch;
   margin: 0;
 }
@@ -659,7 +807,7 @@ a {
   margin: 0;
   padding: 0;
   font-size: 0.85rem;
-  color: var(--text-dim);
+  color: var(--text-muted);
 }
 
 .project__links {
@@ -669,15 +817,32 @@ a {
 }
 
 .project__links a {
-  border-bottom: 1px solid var(--line-strong);
+  position: relative;
   padding-bottom: 2px;
-  transition: border-color 0.25s var(--ease), color 0.25s var(--ease);
+  transition: color 0.25s var(--ease);
+}
+
+.project__links a::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 1px;
+  background: var(--accent);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.3s var(--ease);
 }
 
 .project__links a:hover,
 .project__links a:focus-visible {
   color: var(--accent);
-  border-color: var(--accent);
+}
+
+.project__links a:hover::after,
+.project__links a:focus-visible::after {
+  transform: scaleX(1);
 }
 
 .project__links a span {
@@ -733,7 +898,7 @@ a {
 
 .current__number {
   font-family: var(--font-display);
-  color: var(--text-dim);
+  color: var(--text-label);
   font-size: 1.1rem;
 }
 
@@ -750,14 +915,14 @@ a {
 
 .current__category {
   display: block;
-  color: var(--text-dim);
+  color: var(--text-muted);
   font-size: 0.85rem;
   margin-bottom: 0.75rem;
 }
 
 .current__desc {
   margin: 0;
-  color: var(--text-dim);
+  color: var(--text-secondary);
   max-width: 46ch;
   font-size: 0.95rem;
 }
@@ -768,7 +933,7 @@ a {
   gap: 0.5rem;
   font-size: 0.8rem;
   white-space: nowrap;
-  color: var(--text-dim);
+  color: var(--text-muted);
   align-self: center;
 }
 
@@ -778,7 +943,7 @@ a {
   height: 6px;
   border-radius: 50%;
   background: var(--accent);
-  box-shadow: 0 0 8px 1px rgba(159, 198, 232, 0.7);
+  box-shadow: 0 0 8px 1px rgba(175, 199, 255, 0.7);
   animation: statusPulse 2.4s ease-in-out infinite;
 }
 
@@ -815,6 +980,26 @@ a {
   transition: background-color 0.3s var(--ease);
 }
 
+/* A small marker on the shared connecting line, per entry — brightens on
+   hover so "the line reacts" without needing to split it into segments. */
+.experience__item::before {
+  content: "";
+  position: absolute;
+  left: 10rem;
+  top: 50%;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  transform: translate(-50%, -50%);
+  transition: background-color 0.3s var(--ease), box-shadow 0.3s var(--ease);
+}
+
+.experience__item:hover::before {
+  background: var(--accent);
+  box-shadow: 0 0 8px 1px rgba(175, 199, 255, 0.6);
+}
+
 .experience__item:last-child {
   border-bottom: 1px solid var(--line);
 }
@@ -824,7 +1009,7 @@ a {
 }
 
 .experience__period {
-  color: var(--text-dim);
+  color: var(--text-muted);
   font-size: 0.9rem;
   transition: color 0.3s var(--ease);
 }
@@ -846,14 +1031,14 @@ a {
 
 .experience__desc {
   margin: 0;
-  color: var(--text-dim);
+  color: var(--text-secondary);
   font-size: 0.95rem;
   max-width: 52ch;
 }
 
 .experience__org {
   font-size: 0.9rem;
-  color: var(--text-dim);
+  color: var(--text-muted);
   text-align: right;
 }
 
@@ -868,7 +1053,7 @@ a {
 }
 
 .contact__eyebrow {
-  color: var(--text-dim);
+  color: var(--text-label);
   margin: 0 0 1rem;
 }
 
@@ -889,15 +1074,32 @@ a {
 }
 
 .contact__links a {
-  border-bottom: 1px solid var(--line-strong);
+  position: relative;
   padding-bottom: 3px;
-  transition: color 0.25s var(--ease), border-color 0.25s var(--ease);
+  transition: color 0.25s var(--ease);
+}
+
+.contact__links a::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 1px;
+  background: var(--accent);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.3s var(--ease);
 }
 
 .contact__links a:hover,
 .contact__links a:focus-visible {
   color: var(--accent);
-  border-color: var(--accent);
+}
+
+.contact__links a:hover::after,
+.contact__links a:focus-visible::after {
+  transform: scaleX(1);
 }
 
 /* ==========================================================================
@@ -907,7 +1109,7 @@ a {
 .footer {
   padding: 2rem var(--gutter) 3rem;
   text-align: center;
-  color: var(--text-dim);
+  color: var(--text-muted);
   font-size: 0.85rem;
 }
 
@@ -927,7 +1129,8 @@ html.has-custom-cursor button {
 }
 
 .cursor-core,
-.cursor-aura {
+.cursor-aura,
+.cursor-spark {
   position: fixed;
   top: 0;
   left: 0;
@@ -939,40 +1142,51 @@ html.has-custom-cursor button {
 
 .cursor-core {
   z-index: 1000;
-  width: 10px;
-  height: 10px;
+  width: 12px;
+  height: 12px;
   background: #f3f8ff;
-  box-shadow: 0 0 14px 2px rgba(159, 198, 232, 0.85);
+  box-shadow: 0 0 16px 3px rgba(175, 199, 255, 0.85);
   transition: width 0.25s var(--ease), height 0.25s var(--ease);
 }
 
 .cursor-aura {
   z-index: 999;
-  width: 60px;
-  height: 60px;
-  background: radial-gradient(circle, rgba(159, 198, 232, 0.32), transparent 72%);
+  width: 68px;
+  height: 68px;
+  background: radial-gradient(circle, rgba(175, 199, 255, 0.32), transparent 72%);
   transition: width 0.35s var(--ease), height 0.35s var(--ease),
     background 0.35s var(--ease);
 }
 
+/* A single small trailing "spark" — the third, slowest-settling point in
+   the core → aura → spark chain, giving a faint afterimage without ever
+   spawning more than these three fixed elements. */
+.cursor-spark {
+  z-index: 998;
+  width: 4px;
+  height: 4px;
+  background: rgba(175, 199, 255, 0.8);
+  box-shadow: 0 0 6px 1px rgba(175, 199, 255, 0.6);
+}
+
 /* Generic interactive hover (links, buttons) */
 .cursor-aura.is-hovering {
-  width: 84px;
-  height: 84px;
-  background: radial-gradient(circle, rgba(159, 198, 232, 0.45), transparent 72%);
+  width: 92px;
+  height: 92px;
+  background: radial-gradient(circle, rgba(175, 199, 255, 0.45), transparent 72%);
 }
 
 .cursor-core.is-hovering {
-  width: 6px;
-  height: 6px;
+  width: 7px;
+  height: 7px;
 }
 
 /* Project-card hover — cursor becomes a small lens with a "View" cue */
 .cursor-aura.is-project {
-  width: 110px;
-  height: 110px;
-  background: radial-gradient(circle, rgba(159, 198, 232, 0.16), transparent 75%);
-  border: 1px solid rgba(159, 198, 232, 0.4);
+  width: 120px;
+  height: 120px;
+  background: radial-gradient(circle, rgba(175, 199, 255, 0.16), transparent 75%);
+  border: 1px solid rgba(175, 199, 255, 0.4);
 }
 
 .cursor-aura__label {
@@ -1008,6 +1222,16 @@ html.has-custom-cursor button {
   transform: translateY(0);
 }
 
+/* The section-label accent line "draws" in (width, not fade) as its header
+   enters the viewport — driven by the same IntersectionObserver as .reveal. */
+.reveal-line {
+  width: 0;
+}
+
+.reveal-line.is-visible {
+  width: 2.5rem;
+}
+
 /* ==========================================================================
    Focus visibility
    ========================================================================== */
@@ -1031,10 +1255,8 @@ button:focus-visible {
     display: flex;
   }
 
-  /* A 240vh hero scrub track is a lot of scrolling on a small screen —
-     shorten it so the cinematic open doesn't overstay its welcome. */
-  .hero {
-    height: 160vh;
+  .interlude {
+    min-height: 50vh;
   }
 
   .about__grid,
@@ -1080,7 +1302,8 @@ button:focus-visible {
     margin: 0;
   }
 
-  .experience__list::before {
+  .experience__list::before,
+  .experience__item::before {
     display: none;
   }
 
@@ -1115,8 +1338,24 @@ button:focus-visible {
     opacity: 0.4;
   }
 
-  .bg-light {
+  .bg-light,
+  .cursor-spark {
     display: none;
+  }
+
+  /* Staged hero/word reveals and the section-label line-draw become instant
+     rather than animated. */
+  .hero-reveal,
+  .hero__name-word {
+    opacity: 1;
+    transform: none;
+    filter: none;
+    animation: none;
+  }
+
+  .reveal-line {
+    width: 2.5rem;
+    transition: none;
   }
 
   .project,
@@ -1124,13 +1363,19 @@ button:focus-visible {
   .project::before,
   .current__item,
   .experience__item,
+  .experience__item::before,
   .btn,
+  .btn::before,
   .nav,
   .nav-mobile,
   .nav__toggle span,
   .hero__scroll,
   .stack__item,
-  .stack__note {
+  .stack__item::before,
+  .stack__note,
+  .section__label-line,
+  .bg-video,
+  .bg-overlay {
     transition: none;
   }
 

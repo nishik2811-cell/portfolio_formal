@@ -17,12 +17,17 @@
 </head>
 <body>
 
-  <!-- Persistent cinematic video background — fixed behind the whole page,
-       driven by overall scroll progress (see script.js). -->
+  <!-- Persistent cinematic video background — one fixed, full-viewport,
+       autoplaying/looping video behind the whole page. It is never paused,
+       seeked, or re-mounted; only the overlay/filter in front of it change
+       (via body[data-scene], set in script.js) as different sections scroll
+       into view, so its visual prominence shifts without touching playback. -->
   <video
     class="bg-video"
     id="bgVideo"
     src="frieren.mp4"
+    autoplay
+    loop
     muted
     playsinline
     preload="auto"
@@ -64,36 +69,42 @@
 
   <main>
 
-    <!-- 1. Hero — a tall scroll track; the inner content stays pinned while
-         that extra height lets script.js scrub the background video. -->
+    <!-- 1. Hero — a normal full-height section (no scroll-jacking). The name
+         reveals word by word, then the rest stages in behind it; see the
+         .hero-reveal-* classes and .hero__name-word in styles.css. -->
     <section class="hero" id="home">
-      <div class="hero__sticky">
-        <div class="hero__inner">
-          <p class="hero__status reveal">
-            <span class="hero__status-dot" aria-hidden="true"></span>
-            Available to build
-          </p>
-          <h1 class="hero__name reveal">Nishita&nbsp;Kumari</h1>
-          <p class="hero__tagline reveal">
-            Mathematics &amp; Computing student building at the intersection
-            of code, data and intelligent systems.
-          </p>
-          <div class="hero__cta reveal">
-            <a href="#projects" class="btn btn--primary">View my work</a>
-            <a href="#contact" class="btn btn--ghost">Get in touch</a>
-          </div>
+      <div class="hero__inner">
+        <p class="hero__status hero-reveal hero-reveal--1">
+          <span class="hero__status-dot" aria-hidden="true"></span>
+          Currently building
+        </p>
+        <h1 class="hero__name">
+          <span class="hero__name-word" style="--i: 0">Nishita</span>
+          <span class="hero__name-word" style="--i: 1">Kumari</span>
+        </h1>
+        <p class="hero__tagline hero-reveal hero-reveal--4">
+          Mathematics &amp; Computing student building at the intersection
+          of code, data and intelligent systems.
+        </p>
+        <div class="hero__cta hero-reveal hero-reveal--5">
+          <a href="#projects" class="btn btn--primary">View my work</a>
+          <a href="#contact" class="btn btn--ghost">Get in touch</a>
         </div>
-        <a href="#about" class="hero__scroll" id="heroScroll">
-          <span>Scroll</span>
-          <span class="hero__scroll-line" aria-hidden="true"></span>
-        </a>
       </div>
+      <a href="#about" class="hero__scroll hero-reveal hero-reveal--6">
+        <span>Scroll</span>
+        <span class="hero__scroll-line" aria-hidden="true"></span>
+      </a>
     </section>
 
     <!-- 2. About -->
     <section class="section about" id="about">
       <div class="section__head">
-        <span class="section__label">About</span>
+        <div class="section__label">
+          <span class="section__label-num">01</span>
+          <span class="section__label-line reveal-line" aria-hidden="true"></span>
+          <span class="section__label-text">About</span>
+        </div>
       </div>
       <div class="about__grid">
         <div class="about__lead reveal">
@@ -124,44 +135,73 @@
       </div>
     </section>
 
-    <!-- 3. Tech Stack -->
+    <!-- 3. Cinematic interlude — a deliberate breathing moment. Still the
+         same persistent background video; only the overlay lightens (see
+         body[data-scene="interlude"] in styles.css) so the scene reads
+         clearly for a beat before the site's information density returns. -->
+    <section class="interlude" id="interlude">
+      <p class="interlude__text reveal">Still<br />curious.</p>
+    </section>
+
+    <!-- 4. Tech Stack -->
     <section class="section stack" id="stack">
       <div class="section__head">
-        <span class="section__label">Tech Stack</span>
+        <div class="section__label">
+          <span class="section__label-num">02</span>
+          <span class="section__label-line reveal-line" aria-hidden="true"></span>
+          <span class="section__label-text">Tech Stack</span>
+        </div>
         <p class="section__intro reveal">Tools and technologies I reach for most.</p>
       </div>
       <div class="stack__list" id="stackList"></div>
     </section>
 
-    <!-- 4. Projects -->
+    <!-- 5. Projects -->
     <section class="section projects" id="projects">
       <div class="section__head">
-        <span class="section__label">Projects</span>
+        <div class="section__label">
+          <span class="section__label-num">03</span>
+          <span class="section__label-line reveal-line" aria-hidden="true"></span>
+          <span class="section__label-text">Projects</span>
+        </div>
         <p class="section__intro reveal">A few things I've built and shipped.</p>
       </div>
       <div class="projects__list" id="projectsList"></div>
     </section>
 
-    <!-- 5. Currently Working On -->
+    <!-- 6. Currently Working On -->
     <section class="section current" id="current">
       <div class="section__head">
-        <span class="section__label">Currently Working On</span>
+        <div class="section__label">
+          <span class="section__label-num">04</span>
+          <span class="section__label-line reveal-line" aria-hidden="true"></span>
+          <span class="section__label-text">Currently Working On</span>
+        </div>
         <p class="section__intro reveal">Things I'm building, learning, and experimenting with right now.</p>
       </div>
       <div class="current__list" id="currentList"></div>
     </section>
 
-    <!-- 6. Experience -->
+    <!-- 7. Experience -->
     <section class="section experience" id="experience">
       <div class="section__head">
-        <span class="section__label">Experience</span>
+        <div class="section__label">
+          <span class="section__label-num">05</span>
+          <span class="section__label-line reveal-line" aria-hidden="true"></span>
+          <span class="section__label-text">Experience</span>
+        </div>
         <p class="section__intro reveal">Work, hackathons, clubs and other things I've shown up for.</p>
       </div>
       <div class="experience__list" id="experienceList"></div>
     </section>
 
-    <!-- 7. Contact -->
+    <!-- 8. Contact -->
     <section class="section contact" id="contact">
+      <div class="section__label section__label--center reveal">
+        <span class="section__label-num">06</span>
+        <span class="section__label-line reveal-line" aria-hidden="true"></span>
+        <span class="section__label-text">Contact</span>
+      </div>
       <p class="contact__eyebrow reveal">What's next</p>
       <h2 class="contact__headline reveal">Let's build something.</h2>
       <div class="contact__links reveal" id="contactLinks"></div>
