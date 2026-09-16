@@ -34,17 +34,17 @@
 }
 
 /* A real brightness arc, not a flat vignette: bright at the hero, a peak
-   at the interlude ("Still curious."), then a deliberate dip through the
-   denser content sections that follow it, recovering to a second peak at
-   contact — a real "dull, then bright again" swing, not a subtle nudge. */
+   at the interlude ("Still curious."), then ONE consistent dull plateau —
+   same darkness the whole way from education through experience, no
+   wavering in between — before recovering to a second peak at contact. */
 body[data-scene="hero"] { --overlay-opacity: 0.48; --world-brightness: 1.05; }
-body[data-scene="about"] { --overlay-opacity: 0.58; --world-brightness: 1; }
-body[data-scene="education"] { --overlay-opacity: 0.61; --bg-shift: -4px; --world-brightness: 0.95; }
-body[data-scene="interlude"] { --overlay-opacity: 0.38; --bg-shift: -10px; --world-brightness: 1.15; }
-body[data-scene="stack"] { --overlay-opacity: 0.68; --world-brightness: 0.85; }
-body[data-scene="projects"] { --overlay-opacity: 0.74; --world-brightness: 0.75; }
-body[data-scene="current"] { --overlay-opacity: 0.76; --world-brightness: 0.72; }
-body[data-scene="experience"] { --overlay-opacity: 0.7; --bg-shift: 3px; --world-brightness: 0.78; }
+body[data-scene="about"] { --overlay-opacity: 0.6; --world-brightness: 0.92; }
+body[data-scene="education"] { --overlay-opacity: 0.78; --bg-shift: -4px; --world-brightness: 0.62; }
+body[data-scene="interlude"] { --overlay-opacity: 0.34; --bg-shift: -10px; --world-brightness: 1.2; }
+body[data-scene="stack"] { --overlay-opacity: 0.78; --world-brightness: 0.62; }
+body[data-scene="projects"] { --overlay-opacity: 0.78; --world-brightness: 0.62; }
+body[data-scene="current"] { --overlay-opacity: 0.78; --world-brightness: 0.62; }
+body[data-scene="experience"] { --overlay-opacity: 0.78; --bg-shift: 3px; --world-brightness: 0.62; }
 body[data-scene="contact"] { --overlay-opacity: 0.4; --bg-shift: 6px; --world-brightness: 1.15; }
 
 * {
@@ -166,28 +166,53 @@ a {
   to { transform: translateX(140vw); }
 }
 
-/* One faint shooting star, on a long loop so it reads as an occasional
-   discovery rather than a recurring effect. */
+/* A few shooting stars, each on its own long loop timed differently so
+   they read as occasional discoveries scattered through the page, never
+   all firing together. A bright glowing head (box-shadow) plus a longer,
+   fading tail (the gradient body) reads more like a real streak than a
+   plain line. */
 .shooting-star {
   position: fixed;
-  top: 16%;
-  left: 6%;
   z-index: -2;
-  width: 90px;
+  width: 120px;
   height: 2px;
   pointer-events: none;
-  background: linear-gradient(90deg, rgba(255, 255, 255, 0.9), transparent);
+  /* Bright head at the END of the gradient (the leading edge for --a/--c,
+     which travel toward positive x/y) — the tail (fading toward
+     transparent) trails behind at the start. --b travels the opposite
+     way and gets its own reversed gradient below, not this one. */
+  background: linear-gradient(90deg, transparent, rgba(200, 220, 255, 0.5) 65%, #eef4ff);
   border-radius: 999px;
-  transform: rotate(22deg);
+  box-shadow: 0 0 8px 1px rgba(220, 232, 255, 0.9);
   opacity: 0;
-  animation: shootingStar 16s linear infinite;
 }
 
-@keyframes shootingStar {
-  0%, 90% { opacity: 0; transform: rotate(22deg) translate(0, 0); }
-  91% { opacity: 1; }
-  96% { opacity: 1; transform: rotate(22deg) translate(50vw, 26vh); }
-  100% { opacity: 0; transform: rotate(22deg) translate(54vw, 28vh); }
+.shooting-star--a { top: 14%; left: 4%; transform: rotate(24deg); animation: shootingStarA 14s linear infinite; }
+.shooting-star--b {
+  top: 62%;
+  right: 8%;
+  left: auto;
+  transform: rotate(-18deg);
+  /* Travels toward negative x/y, so its leading edge is the opposite end
+     — bright head at the START of the gradient instead. */
+  background: linear-gradient(90deg, #eef4ff, rgba(200, 220, 255, 0.5) 35%, transparent);
+  animation: shootingStarB 19s linear infinite;
+  animation-delay: -6s;
+}
+.shooting-star--c { top: 30%; left: 55%; transform: rotate(30deg); width: 90px; animation: shootingStarA 23s linear infinite; animation-delay: -13s; }
+
+@keyframes shootingStarA {
+  0%, 88% { opacity: 0; transform: rotate(24deg) translate(0, 0); }
+  89% { opacity: 1; }
+  95% { opacity: 1; transform: rotate(24deg) translate(48vw, 24vh); }
+  100% { opacity: 0; transform: rotate(24deg) translate(52vw, 26vh); }
+}
+
+@keyframes shootingStarB {
+  0%, 88% { opacity: 0; transform: rotate(-18deg) translate(0, 0); }
+  89% { opacity: 1; }
+  95% { opacity: 1; transform: rotate(-18deg) translate(-46vw, -20vh); }
+  100% { opacity: 0; transform: rotate(-18deg) translate(-50vw, -22vh); }
 }
 
 /* Distant hill silhouettes — two layers, nudged a few px per scene (see
@@ -920,12 +945,6 @@ a {
   z-index: -1;
   pointer-events: none;
   overflow: visible;
-  /* Dims/relights every platform AND the cat together, in one place — see
-     --world-brightness above. A CSS filter on a parent applies to its
-     whole rendered subtree, pseudo-elements (the platforms' shapes/vines)
-     included, so this doesn't need repeating per element. */
-  filter: brightness(var(--world-brightness, 1));
-  transition: filter 1.2s var(--ease);
 }
 
 /* Small patches of moonlit ground rather than floating discs — irregular
@@ -944,7 +963,19 @@ a {
   width: clamp(84px, 9vw, 190px);
   height: clamp(22px, 2.6vw, 34px);
   left: 0;
-  transition: transform 0.35s var(--ease), filter 0.35s var(--ease);
+  /* Dims/relights with the scene (see --world-brightness, near :root)  —
+     applied per platform rather than on the shared .world wrapper: that
+     wrapper is a position:fixed box pinned exactly to the viewport edges,
+     and giving IT a filter was clipping anything (like a platform's own
+     dangling vine, or --l3 sitting close to the bottom edge) that painted
+     past its bounds in some browsers. A filter on this smaller, ordinary
+     box has no such edge to clip against. */
+  filter: brightness(var(--world-brightness, 1));
+  /* Landing/walk-sway bounce stays quick (transform); the scene-brightness
+     fade (filter) is deliberately much slower and matches .cat/.hills/
+     .bg-overlay's own timing, so the whole world dims/relights together
+     as one visible, unhurried change rather than a snap. */
+  transition: transform 0.35s var(--ease), filter 1.2s var(--ease);
 }
 
 /* The jagged grass silhouette lives on ::before, deliberately separate
@@ -963,11 +994,15 @@ a {
   /* A real torn/zigzag edge, not a subtly-wavy rectangle — on a platform
      this thin, the earlier version's few-percent wobble amounted to a
      couple of px and read as a plain bar. Top and bottom edges each swing
-     across roughly a third of the platform's own height now. */
+     across roughly a third of the platform's own height now. The flush
+     seam at x:0 is broken into a few small bulges (rather than one
+     perfectly straight closing edge) so it reads as a rough, rooted edge
+     growing out of the wall instead of looking like the shape was simply
+     sliced off there. */
   clip-path: polygon(
     0% 20%, 12% 2%, 25% 26%, 37% 4%, 50% 28%, 62% 2%, 75% 24%, 87% 4%,
     100% 18%, 100% 80%, 87% 98%, 75% 76%, 62% 98%, 50% 74%, 37% 98%,
-    25% 78%, 12% 98%, 0% 82%
+    25% 78%, 12% 98%, 0% 82%, 4% 68%, 0% 55%, 4% 38%
   );
   background:
     radial-gradient(ellipse at 25% 10%, rgba(175, 199, 255, 0.3), transparent 65%),
@@ -993,10 +1028,11 @@ a {
 }
 
 .platform--mirror::before {
+  /* Same rough-seam treatment as the base shape, mirrored to x:100%. */
   clip-path: polygon(
     100% 8%, 100% 90%, 92% 99%, 76% 91%, 60% 100%, 42% 89%, 26% 98%,
     10% 83%, 0% 60%, 5% 38%, 0% 18%, 15% 5%, 33% 12%,
-    51% 2%, 69% 10%, 87% 0%
+    51% 2%, 69% 10%, 87% 0%, 96% 22%, 100% 45%, 96% 62%
   );
   background:
     radial-gradient(ellipse at 75% 10%, rgba(175, 199, 255, 0.3), transparent 65%),
@@ -1200,18 +1236,6 @@ a {
 .lantern--a { left: 6%; top: 34vh; }
 .lantern--b { right: 7%; top: 64vh; animation-delay: -2.2s; }
 
-/* A faint, static constellation — one of the sky's few fixed points of
-   interest, deliberately understated (see .sky/.moon above for the rest of
-   the background hierarchy). */
-.constellation {
-  position: fixed;
-  top: 10%;
-  left: 8%;
-  z-index: -5;
-  width: clamp(120px, 16vw, 220px);
-  height: auto;
-  opacity: 0.8;
-}
 
 /* A few short-lived dust motes spawned on landing (cat.js) — capped at a
    handful per jump and removed right after their own animation, never
@@ -1245,10 +1269,8 @@ a {
   transform-origin: 50% 85%;
   pointer-events: auto;
   cursor: default;
-  /* Brightness now comes from the parent .world's filter (see above) so it
-     moves together with the platforms — this one is just the shadow. */
-  filter: drop-shadow(0 8px 10px rgba(5, 7, 13, 0.5));
-  transition: opacity 0.35s var(--ease);
+  filter: brightness(var(--world-brightness, 1)) drop-shadow(0 8px 10px rgba(5, 7, 13, 0.5));
+  transition: opacity 0.35s var(--ease), filter 1.2s var(--ease);
 }
 
 @keyframes catPoke {
@@ -2380,7 +2402,7 @@ button:focus-visible {
     filter: none;
   }
 
-  .world {
+  .platform {
     transition: none;
   }
 

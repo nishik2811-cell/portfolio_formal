@@ -295,7 +295,7 @@ document
 (function initStars() {
   const container = document.getElementById("stars");
   if (!container) return;
-  const count = window.innerWidth < 640 ? 10 : 18;
+  const count = window.innerWidth < 640 ? 26 : 55;
   for (let i = 0; i < count; i++) {
     const isMote = i % 6 === 0;
     const star = document.createElement("span");

@@ -29,7 +29,11 @@
   "use strict";
 
   const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const canLook = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+  // Matches the exact gate script.js's own custom-cursor system uses — a
+  // stricter "(hover: hover) and (pointer: fine)" check disagreed with it
+  // on some hybrid touch+mouse devices, which silently left the cat's
+  // look/walk-toward-cursor behavior off while everything else still ran.
+  const canLook = window.matchMedia("(pointer: fine)").matches;
   const isCompact = window.matchMedia("(max-width: 640px)").matches;
 
   // Design-space canvas the cat is drawn into every frame; CSS then scales
@@ -444,27 +448,26 @@
     let lookX = 0;
     let lookY = 0;
     let running = false; // a longer walk gets a quicker leg cycle — the RUN posture
-    let pose = "idle"; // idle | sit | sleep | walk | crouch | jump
+    let pose = "idle"; // idle | sit | sleep | walk | crouch | jump | pet
     let localTimer = null;
     let blinkTimerId = null;
     let glanceTimerId = null;
     let walkStepTimer = null;
-    let pokeTimes = [];
-    let annoyed = false;
     let cursorCooldownUntil = 0;
     let lastCursorCheck = 0;
-    let cursorNoticed = false;
 
     const CROUCH_MS = 220;
     const WALK_NOTICE_RANGE = 240; // cursor this close to the cat → may walk toward it
-    const JUMP_NOTICE_RANGE = 420; // cursor this close to another platform → may jump to it
 
     function clamp(v, min, max) {
       return Math.max(min, Math.min(max, v));
     }
 
     function busy() {
-      return pose === "walk" || pose === "crouch" || pose === "jump" || pose === "stretch" || pose === "groom";
+      return (
+        pose === "walk" || pose === "crouch" || pose === "jump" ||
+        pose === "stretch" || pose === "groom" || pose === "pet"
+      );
     }
 
     function visiblePlatforms() {
@@ -474,16 +477,22 @@
     // Posture parameters that should ease toward their target rather than
     // snap the instant `pose` changes — everything a transition might
     // touch (tail, ears-via-earFlat is boolean so excluded, legs, body
-    // dip/lift, squash/stretch, look direction). Booleans/enums (dir,
-    // front, blink, sleeping, grooming, earFlat) pass straight through
-    // instead: there's nothing to "ease" about a flip.
+    // dip/lift, squash/stretch, look direction, and — importantly — dir).
+    // dir eases too rather than snapping: turning to face the other way
+    // now passes through a thin sliver (scaleX toward 0) before mirroring
+    // out the other side, like a real 2D flip, instead of instantly
+    // mirroring the whole drawing on one frame while everything else was
+    // still mid-ease — that combination was the actual "glitchy" snap.
+    // Only genuine booleans/enums (front, blink, sleeping, grooming,
+    // earFlat) pass straight through, since there's nothing to ease there.
     const SMOOTH_KEYS = [
-      "lookX", "lookY", "squashX", "squashY", "tilt", "lift", "headBob",
+      "dir", "lookX", "lookY", "squashX", "squashY", "tilt", "lift", "headBob",
       "tailAngle", "tailCurl", "legBackY", "legBackX", "legFrontA",
       "legFrontB", "legFrontDip", "bodyDipY",
     ];
     const current = {};
     SMOOTH_KEYS.forEach((k) => (current[k] = 0));
+    current.dir = 1;
     let lastRenderTime = performance.now();
 
     // Pure: today's desired posture, given the current pose/time. render()
@@ -496,22 +505,26 @@
         dir,
         lookX,
         lookY,
-        front: pose === "idle" || pose === "sit" || pose === "sleep" || pose === "groom",
-        blink: blink || pose === "sleep",
+        front: pose === "idle" || pose === "sit" || pose === "sleep" || pose === "groom" || pose === "pet",
+        blink: blink || pose === "sleep" || pose === "pet",
         sleeping: pose === "sleep",
         grooming: pose === "groom",
         squashX: pose === "crouch" ? 1.1 : 1,
         squashY: pose === "crouch" ? 0.84 : 1,
         tilt: 0,
         // A small vertical bob synced to the walk cycle (paws "contacting"
-        // the ground twice per stride) on top of the sleep-only lift.
-        lift: pose === "sleep" ? 6 : legWalk ? Math.abs(Math.sin(t * legSpeed)) * 4.5 : 0,
-        earFlat: annoyed || pose === "crouch",
+        // the ground twice per stride) on top of the sleep-only lift and a
+        // slightly bigger, slower one while being pet (a content little
+        // nuzzle rather than a walking bounce).
+        lift: pose === "sleep" ? 6 : pose === "pet" ? Math.sin(t * 3) * 2.2 : legWalk ? Math.abs(Math.sin(t * legSpeed)) * 4.5 : 0,
+        earFlat: pose === "crouch",
         headBob:
           pose === "idle" || pose === "sit"
             ? Math.sin(t * 1.6) * 1.4
             : pose === "sleep"
             ? Math.sin(t * 0.8) * 1
+            : pose === "pet"
+            ? Math.sin(t * 3) * 1.6
             : 0,
         tailAngle:
           pose === "walk"
@@ -526,8 +539,10 @@
             ? 20
             : pose === "stretch"
             ? -55
+            : pose === "pet"
+            ? 10 + Math.sin(t * 5) * 12
             : 0,
-        tailCurl: pose === "sit" || pose === "sleep" ? 14 : 0,
+        tailCurl: pose === "sit" || pose === "sleep" || pose === "pet" ? 14 : 0,
         legBackY: pose === "jump" ? -18 : pose === "crouch" ? 6 : pose === "stretch" ? -20 : 0,
         // Both back legs swing opposite the near front paw during a walk —
         // a real alternating (diagonal-pair) gait rather than just the
@@ -574,7 +589,6 @@
       SMOOTH_KEYS.forEach((k) => {
         current[k] += (target[k] - current[k]) * factor;
       });
-      current.dir = target.dir;
       current.front = target.front;
       current.blink = target.blink;
       current.sleeping = target.sleeping;
@@ -676,7 +690,8 @@
         const t = Math.min(1, (performance.now() - start) / duration);
         const eased = 1 - Math.pow(1 - t, 2); // ease-out — visibly slows approaching the target
         canvas.style.left = `${startLeft + (targetLeft - startLeft) * eased}px`;
-        render();
+        // No render() here either — same reasoning as the jump tick: the
+        // continuous loop already redraws every frame on its own.
         if (t >= 1) {
           clearInterval(walkStepTimer);
           if (platformEl) platformEl.classList.remove("is-active");
@@ -812,7 +827,12 @@
           tailAngle,
           earFlat: t < 0.5,
         };
-        render();
+        // No render() call here — the continuous loop (started once in
+        // start()) is already running every frame and will pick up this
+        // override on its own very next tick. Calling render() from both
+        // this rAF chain and that one was drawing the same frame twice
+        // with two independently-computed delta-times, which is the kind
+        // of redundant double-update that reads as a subtle stutter.
         if (t < 1) {
           requestAnimationFrame(tick);
         } else {
@@ -1008,6 +1028,10 @@
       if (now - lastPetAt < 500) return; // ignore a rapid double-click as one pet, not two
       lastPetAt = now;
       pose = "pet";
+      canvas.classList.remove("is-poked");
+      void canvas.offsetWidth;
+      canvas.classList.add("is-poked");
+      setTimeout(() => canvas.classList.remove("is-poked"), 320);
       render();
       setTimeout(() => {
         pose = "idle";
