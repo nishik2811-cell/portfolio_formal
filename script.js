@@ -47,9 +47,15 @@ function renderStack() {
 function renderProjects() {
   const root = document.getElementById("projectsList");
   root.innerHTML = PORTFOLIO_DATA.projects
-    .map(
-      (p, i) => `
-      <article class="project reveal" style="--stagger-index: ${i}">
+    .map((p, i) => {
+      // The whole card is the link when there's somewhere to send it (no
+      // separate "Code" line to click) — an <a> when p.github/p.demo is
+      // set, a plain <article> otherwise.
+      const href = p.github || p.demo;
+      const tag = href ? "a" : "article";
+      const linkAttrs = href ? ` href="${href}" target="_blank" rel="noopener"` : "";
+      return `
+      <${tag} class="project reveal" style="--stagger-index: ${i}"${linkAttrs}>
         ${p.image ? `<img class="project__image" src="${p.image}" alt="${p.name} screenshot" loading="lazy" />` : ""}
         <div class="project__head">
           <span class="project__index" aria-hidden="true">Project 0${i + 1}</span>
@@ -61,25 +67,19 @@ function renderProjects() {
             ? `<ul class="project__tech">${p.tech.map((t) => `<li>${t}</li>`).join("")}</ul>`
             : ""
         }
-        ${
-          p.github || p.demo
-            ? `<div class="project__links">
-                ${p.github ? `<a href="${p.github}" target="_blank" rel="noopener">Code <span>→</span></a>` : ""}
-                ${p.demo ? `<a href="${p.demo}" target="_blank" rel="noopener">Live demo <span>→</span></a>` : ""}
-              </div>`
-            : ""
-        }
-      </article>`
-    )
+      </${tag}>`;
+    })
     .join("");
 }
 
 function renderCurrent() {
   const root = document.getElementById("currentList");
   root.innerHTML = PORTFOLIO_DATA.currentlyWorking
-    .map(
-      (c, i) => `
-      <div class="current__item reveal" style="--stagger-index: ${i}">
+    .map((c, i) => {
+      const tag = c.github ? "a" : "div";
+      const linkAttrs = c.github ? ` href="${c.github}" target="_blank" rel="noopener"` : "";
+      return `
+      <${tag} class="current__item reveal" style="--stagger-index: ${i}"${linkAttrs}>
         ${c.image ? `<img class="current__image" src="${c.image}" alt="${c.title} screenshot" loading="lazy" />` : ""}
         <div class="current__item-head">
           <span class="current__number">${c.number}</span>
@@ -93,13 +93,8 @@ function renderCurrent() {
             ? `<ul class="project__tech">${c.tech.map((t) => `<li>${t}</li>`).join("")}</ul>`
             : ""
         }
-        ${
-          c.github
-            ? `<div class="project__links"><a href="${c.github}" target="_blank" rel="noopener">Code <span>→</span></a></div>`
-            : ""
-        }
-      </div>`
-    )
+      </${tag}>`;
+    })
     .join("");
 }
 
