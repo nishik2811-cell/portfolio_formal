@@ -37,7 +37,7 @@
    at the interlude ("Still curious."), then ONE consistent dull plateau —
    same darkness the whole way from education through experience, no
    wavering in between — before recovering to a second peak at contact. */
-body[data-scene="hero"] { --overlay-opacity: 0.48; --world-brightness: 1.05; }
+body[data-scene="hero"] { --overlay-opacity: 0.58; --world-brightness: 1; }
 body[data-scene="about"] { --overlay-opacity: 0.6; --world-brightness: 0.92; }
 body[data-scene="education"] { --overlay-opacity: 0.78; --bg-shift: -4px; --world-brightness: 0.62; }
 body[data-scene="interlude"] { --overlay-opacity: 0.34; --bg-shift: -10px; --world-brightness: 1.2; }
@@ -57,6 +57,7 @@ html {
 
 body {
   margin: 0;
+  overflow-x: hidden;
   background: var(--bg);
   color: var(--text);
   font-family: var(--font-body);
@@ -961,6 +962,14 @@ a {
 .platform {
   position: absolute;
   width: clamp(84px, 9vw, 190px);
+  /* The l1/l2/l3/r1/r2/r3 rules below set a wider `width`, with a px floor
+     (e.g. 320px) that was sized for desktop and doesn't shrink on a narrow
+     phone — past that floor a platform can end up wider than the screen
+     itself, so its floating tip reaches the FAR edge and gets clipped too,
+     leaving both sides looking flatly cut instead of one rooted edge. This
+     caps the actual rendered width regardless of which `width` wins above,
+     guaranteeing room for the tip on any viewport. */
+  max-width: 65vw;
   height: clamp(22px, 2.6vw, 34px);
   left: 0;
   /* Dims/relights with the scene (see --world-brightness, near :root)  —
@@ -991,19 +1000,10 @@ a {
   content: "";
   position: absolute;
   inset: 0;
-  /* A real torn/zigzag edge, not a subtly-wavy rectangle — on a platform
-     this thin, the earlier version's few-percent wobble amounted to a
-     couple of px and read as a plain bar. Top and bottom edges each swing
-     across roughly a third of the platform's own height now. The flush
-     seam at x:0 is broken into a few small bulges (rather than one
-     perfectly straight closing edge) so it reads as a rough, rooted edge
-     growing out of the wall instead of looking like the shape was simply
-     sliced off there. */
-  clip-path: polygon(
-    0% 20%, 12% 2%, 25% 26%, 37% 4%, 50% 28%, 62% 2%, 75% 24%, 87% 4%,
-    100% 18%, 100% 80%, 87% 98%, 75% 76%, 62% 98%, 50% 74%, 37% 98%,
-    25% 78%, 12% 98%, 0% 82%, 4% 68%, 0% 55%, 4% 38%
-  );
+  /* A plain soft-rounded slab, not a jagged torn silhouette — the earlier
+     zigzag clip-path (many pointed triangular notches along every edge)
+     read as damage/missing chunks rather than a natural grassy ledge. */
+  border-radius: 999px;
   background:
     radial-gradient(ellipse at 25% 10%, rgba(175, 199, 255, 0.3), transparent 65%),
     linear-gradient(90deg, #1c140e 0%, rgba(28, 20, 14, 0) 20%),
@@ -1028,12 +1028,6 @@ a {
 }
 
 .platform--mirror::before {
-  /* Same rough-seam treatment as the base shape, mirrored to x:100%. */
-  clip-path: polygon(
-    100% 8%, 100% 90%, 92% 99%, 76% 91%, 60% 100%, 42% 89%, 26% 98%,
-    10% 83%, 0% 60%, 5% 38%, 0% 18%, 15% 5%, 33% 12%,
-    51% 2%, 69% 10%, 87% 0%, 96% 22%, 100% 45%, 96% 62%
-  );
   background:
     radial-gradient(ellipse at 75% 10%, rgba(175, 199, 255, 0.3), transparent 65%),
     linear-gradient(270deg, #1c140e 0%, rgba(28, 20, 14, 0) 20%),
