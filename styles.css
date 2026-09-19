@@ -202,6 +202,20 @@ a {
 }
 .shooting-star--c { top: 30%; left: 55%; transform: rotate(30deg); width: 90px; animation: shootingStarC 23s linear infinite; animation-delay: -13s; }
 
+/* --d reuses --b's reversed-direction keyframes (own position/timing/size
+   only), so it needs the same reversed head/tail gradient. */
+.shooting-star--d {
+  top: 8%;
+  right: 20%;
+  left: auto;
+  transform: rotate(-18deg);
+  background: linear-gradient(90deg, #eef4ff, rgba(200, 220, 255, 0.5) 35%, transparent);
+  width: 100px;
+  animation: shootingStarB 21s linear infinite;
+  animation-delay: -3s;
+}
+.shooting-star--e { top: 70%; left: 35%; transform: rotate(30deg); width: 70px; animation: shootingStarC 17s linear infinite; animation-delay: -9s; }
+
 /* translate() runs in the coordinate system rotate() just established, so
    translating along X ONLY (Y always 0) is what keeps the star travelling
    exactly along its own tilted length — rotate() alone then supplies the
@@ -2358,16 +2372,24 @@ button:focus-visible {
     display: none;
   }
 
-  /* --l1 and --r1 are both "top tier" ledges (21vh/28vh on desktop, only
-     7vh apart) — fine when 4 other ledges fill the rest of the height, but
-     with just these two left on a phone that reads as one cramped cluster
-     near the top. Spread them across the full height instead. */
+  /* Three ledges on phone instead of two — --l3 is hidden by the 860px
+     query above; bring it back here so the cat has a real 3-way rotation
+     to jump between instead of ping-ponging the same two spots every time.
+     --l1/--r1 are both "top tier" ledges on desktop (21vh/28vh, only 7vh
+     apart) — fine with 4 others filling the rest of the height, but reads
+     as one cramped cluster with only two left. Spread all three evenly
+     across the full height instead. */
   .platform--l1 {
-    top: 16vh;
+    top: 22vh;
   }
 
   .platform--r1 {
-    top: 64vh;
+    top: 52vh;
+  }
+
+  .platform--l3 {
+    display: block;
+    top: 82vh;
   }
 
   .hills {
