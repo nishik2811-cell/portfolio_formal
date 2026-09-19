@@ -1000,10 +1000,30 @@ a {
   content: "";
   position: absolute;
   inset: 0;
-  /* A plain soft-rounded slab, not a jagged torn silhouette — the earlier
-     zigzag clip-path (many pointed triangular notches along every edge)
-     read as damage/missing chunks rather than a natural grassy ledge. */
-  border-radius: 999px;
+  /* Flat vertical seam at x:0 (left edge, untouched by the polygon below)
+     where it roots into the screen edge; every other edge is an irregular
+     hand-picked outline so the free tip reads as a natural, uneven ledge
+     rather than a rounded pill. border-radius can only bend 4 corners into
+     smooth ellipses — never enough points to look genuinely uneven — so the
+     silhouette needs a clip-path polygon instead. box-shadow is swapped for
+     filter: drop-shadow() below because box-shadow is clipped away by
+     clip-path (it's generated from the untouched rectangular box, which
+     clip-path then cuts to nothing outside the polygon); drop-shadow runs
+     after clipping and hugs the actual jagged shape.
+     Exactly 2 lobes, each 7 points tracing a shallow arc (a coarse polygon
+     approximation of a circle segment — a lobe built from only 2-3 points
+     meeting at one vertex still reads as a tooth, no matter how irregular
+     its spacing). The two lobes share nearly the same base x (92%), so the
+     join between them is a short, shallow straight run instead of a notch
+     cut back deep toward the seam — a deep notch there read as a crack
+     splitting the ledge in two, not a natural edge. */
+  clip-path: polygon(
+    0% 0%, 60% 0%,
+    92% 4%, 96% 6.14%, 98.93% 12%, 100% 20%, 98.93% 28%, 96% 33.86%, 92% 36%,
+    92% 40%, 96% 43.75%, 98.93% 54%, 100% 68%, 98.93% 82%, 96% 92.25%, 92% 96%,
+    75% 100%, 0% 100%
+  );
+  filter: drop-shadow(0 10px 10px rgba(5, 7, 13, 0.6));
   background:
     radial-gradient(ellipse at 25% 10%, rgba(175, 199, 255, 0.3), transparent 65%),
     linear-gradient(90deg, #1c140e 0%, rgba(28, 20, 14, 0) 20%),
@@ -1017,7 +1037,6 @@ a {
     radial-gradient(circle at 90% 20%, #9fd0f2 0 2px, transparent 3px),
     repeating-linear-gradient(96deg, rgba(150, 196, 140, 0.4) 0 2px, transparent 2px 8px),
     linear-gradient(160deg, #3d4a35 0%, #24301f 55%, #1a2318 100%);
-  box-shadow: 0 14px 24px -10px rgba(5, 7, 13, 0.7);
   pointer-events: none;
 }
 
@@ -1028,6 +1047,15 @@ a {
 }
 
 .platform--mirror::before {
+  /* Mirrored seam: flat vertical edge at x:100% (rooted), uneven tip on the
+     left. Own 2-lobe sizing (not the base rule mirrored), so --r2 doesn't
+     read as a copy of --l1. */
+  clip-path: polygon(
+    100% 0%, 50% 0%,
+    7% 4%, 3.5% 6.68%, 0.94% 14%, 0% 24%, 0.94% 34%, 3.5% 41.32%, 7% 44%,
+    7% 48%, 3.5% 51.22%, 0.94% 60%, 0% 72%, 0.94% 84%, 3.5% 92.78%, 7% 96%,
+    27% 100%, 100% 100%
+  );
   background:
     radial-gradient(ellipse at 75% 10%, rgba(175, 199, 255, 0.3), transparent 65%),
     linear-gradient(270deg, #1c140e 0%, rgba(28, 20, 14, 0) 20%),
@@ -1086,6 +1114,47 @@ a {
 .platform--r1 { top: 28vh; width: clamp(260px, 19vw, 400px); height: clamp(22px, 2.4vw, 32px); }
 .platform--r2 { top: 54vh; width: clamp(360px, 28vw, 680px); height: clamp(30px, 2.8vw, 42px); }
 .platform--r3 { top: 82vh; width: clamp(170px, 12vw, 260px); height: clamp(18px, 2vw, 26px); }
+
+/* Each ledge's free-floating tip gets its own mismatched top/bottom radius
+   pair (the seam-side corners stay flat, set on .platform::before /
+   .platform--mirror::before above) — six identical jagged bumps in a row
+   would read as a repeated stamp rather than six natural ledges, so each
+   gets its own hand-picked polygon (seam edge left untouched at x:0 / x:100%
+   for the mirrored ones). --l1/--r2 use the default set on ::before itself. */
+.platform--l2::before {
+  /* Exactly 2 lobes, own sizing distinct from every other ledge — see the
+     base rule's comment for why 7-point arcs and a shared-base-x join. */
+  clip-path: polygon(
+    0% 0%, 50% 0%,
+    90% 4%, 95% 7.22%, 98.66% 16%, 100% 28%, 98.66% 40%, 95% 48.78%, 90% 52%,
+    90% 60%, 95% 62.41%, 98.66% 69%, 100% 78%, 98.66% 87%, 95% 93.59%, 90% 96%,
+    70% 100%, 0% 100%
+  );
+}
+.platform--l3::before {
+  clip-path: polygon(
+    0% 0%, 65% 0%,
+    94% 4%, 97% 5.88%, 99.2% 11%, 100% 18%, 99.2% 25%, 97% 30.12%, 94% 32%,
+    94% 34%, 97% 38.02%, 99.2% 49%, 100% 64%, 99.2% 79%, 97% 89.98%, 94% 94%,
+    72% 100%, 0% 100%
+  );
+}
+.platform--r1::before {
+  clip-path: polygon(
+    100% 0%, 55% 0%,
+    9% 4%, 4.5% 7.75%, 1.21% 18%, 0% 32%, 1.21% 46%, 4.5% 56.25%, 9% 60%,
+    9% 70%, 4.5% 71.88%, 1.21% 77%, 0% 84%, 1.21% 91%, 4.5% 96.12%, 9% 98%,
+    30% 100%, 100% 100%
+  );
+}
+.platform--r3::before {
+  clip-path: polygon(
+    100% 0%, 50% 0%,
+    11% 4%, 5.5% 5.61%, 1.47% 10%, 0% 16%, 1.47% 22%, 5.5% 26.39%, 11% 28%,
+    11% 30%, 5.5% 34.29%, 1.47% 46%, 0% 62%, 1.47% 78%, 5.5% 89.71%, 11% 94%,
+    32% 100%, 100% 100%
+  );
+}
 
 /* Vines hanging all across the underside, not one bunch off a corner.
    ::after now spans the platform's FULL width (rather than being one 2px
