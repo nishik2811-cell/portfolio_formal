@@ -200,20 +200,42 @@ a {
   animation: shootingStarB 19s linear infinite;
   animation-delay: -6s;
 }
-.shooting-star--c { top: 30%; left: 55%; transform: rotate(30deg); width: 90px; animation: shootingStarA 23s linear infinite; animation-delay: -13s; }
+.shooting-star--c { top: 30%; left: 55%; transform: rotate(30deg); width: 90px; animation: shootingStarC 23s linear infinite; animation-delay: -13s; }
 
+/* translate() runs in the coordinate system rotate() just established, so
+   translating along X ONLY (Y always 0) is what keeps the star travelling
+   exactly along its own tilted length — rotate() alone then supplies the
+   real on-screen diagonal. The earlier version translated along both X and
+   Y post-rotation, which pushed the star off its own axis and read as an
+   unnatural sideways drift rather than a straight streak.
+   The 87%→98%→100% distances (9.6 → 72 → 84 vmax) are spaced to keep
+   roughly the same vmax-per-1% pace throughout, instead of a fast streak
+   suddenly stalling right as it fades — vmax (not vw/vh) so the travel
+   distance clears the screen the same way regardless of aspect ratio. */
 @keyframes shootingStarA {
-  0%, 88% { opacity: 0; transform: rotate(24deg) translate(0, 0); }
-  89% { opacity: 1; }
-  95% { opacity: 1; transform: rotate(24deg) translate(48vw, 24vh); }
-  100% { opacity: 0; transform: rotate(24deg) translate(52vw, 26vh); }
+  0%, 85% { opacity: 0; transform: rotate(24deg) translate(0, 0); }
+  87% { opacity: 1; transform: rotate(24deg) translate(9.6vmax, 0); }
+  98% { opacity: 1; transform: rotate(24deg) translate(72vmax, 0); }
+  100% { opacity: 0; transform: rotate(24deg) translate(84vmax, 0); }
 }
 
+/* Same shape as shootingStarA, mirrored for --b's opposite travel
+   direction (see its own reversed head/tail gradient above). */
 @keyframes shootingStarB {
-  0%, 88% { opacity: 0; transform: rotate(-18deg) translate(0, 0); }
-  89% { opacity: 1; }
-  95% { opacity: 1; transform: rotate(-18deg) translate(-46vw, -20vh); }
-  100% { opacity: 0; transform: rotate(-18deg) translate(-50vw, -22vh); }
+  0%, 85% { opacity: 0; transform: rotate(-18deg) translate(0, 0); }
+  87% { opacity: 1; transform: rotate(-18deg) translate(-9.6vmax, 0); }
+  98% { opacity: 1; transform: rotate(-18deg) translate(-72vmax, 0); }
+  100% { opacity: 0; transform: rotate(-18deg) translate(-84vmax, 0); }
+}
+
+/* --c used to reuse shootingStarA, but that hard-codes rotate(24deg) at
+   every step, silently overriding --c's own rotate(30deg) for as long as
+   the animation ran. Same shape, --c's actual angle. */
+@keyframes shootingStarC {
+  0%, 85% { opacity: 0; transform: rotate(30deg) translate(0, 0); }
+  87% { opacity: 1; transform: rotate(30deg) translate(9.6vmax, 0); }
+  98% { opacity: 1; transform: rotate(30deg) translate(72vmax, 0); }
+  100% { opacity: 0; transform: rotate(30deg) translate(84vmax, 0); }
 }
 
 /* Distant hill silhouettes — two layers, nudged a few px per scene (see
