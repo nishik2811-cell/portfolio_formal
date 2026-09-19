@@ -28,7 +28,7 @@
      which is the actual containing layer for every platform AND the cat —
      applying it there, once, dims/relights the whole side-world together
      instead of leaving the platforms undimmed while only the cat reacted. */
-  --overlay-opacity: 0.62;
+  --overlay-opacity: 0.74;
   --bg-shift: 0px;
   --world-brightness: 1;
 }
@@ -37,15 +37,15 @@
    at the interlude ("Still curious."), then ONE consistent dull plateau —
    same darkness the whole way from education through experience, no
    wavering in between — before recovering to a second peak at contact. */
-body[data-scene="hero"] { --overlay-opacity: 0.58; --world-brightness: 1; }
-body[data-scene="about"] { --overlay-opacity: 0.6; --world-brightness: 0.92; }
-body[data-scene="education"] { --overlay-opacity: 0.78; --bg-shift: -4px; --world-brightness: 0.62; }
-body[data-scene="interlude"] { --overlay-opacity: 0.34; --bg-shift: -10px; --world-brightness: 1.2; }
-body[data-scene="stack"] { --overlay-opacity: 0.78; --world-brightness: 0.62; }
-body[data-scene="projects"] { --overlay-opacity: 0.78; --world-brightness: 0.62; }
-body[data-scene="current"] { --overlay-opacity: 0.78; --world-brightness: 0.62; }
-body[data-scene="experience"] { --overlay-opacity: 0.78; --bg-shift: 3px; --world-brightness: 0.62; }
-body[data-scene="contact"] { --overlay-opacity: 0.4; --bg-shift: 6px; --world-brightness: 1.15; }
+body[data-scene="hero"] { --overlay-opacity: 0.7; --world-brightness: 1; }
+body[data-scene="about"] { --overlay-opacity: 0.72; --world-brightness: 0.92; }
+body[data-scene="education"] { --overlay-opacity: 0.9; --bg-shift: -4px; --world-brightness: 0.62; }
+body[data-scene="interlude"] { --overlay-opacity: 0.46; --bg-shift: -10px; --world-brightness: 1.2; }
+body[data-scene="stack"] { --overlay-opacity: 0.9; --world-brightness: 0.62; }
+body[data-scene="projects"] { --overlay-opacity: 0.9; --world-brightness: 0.62; }
+body[data-scene="current"] { --overlay-opacity: 0.9; --world-brightness: 0.62; }
+body[data-scene="experience"] { --overlay-opacity: 0.9; --bg-shift: 3px; --world-brightness: 0.62; }
+body[data-scene="contact"] { --overlay-opacity: 0.52; --bg-shift: 6px; --world-brightness: 1.15; }
 
 * {
   box-sizing: border-box;

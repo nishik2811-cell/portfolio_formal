@@ -120,7 +120,7 @@ const PORTFOLIO_DATA = {
       title: "Book Chapter — Reinforcement Learning for Traffic Control and Decision-Making",
       category: "Research × Academic Writing",
       description:
-        "Co-authoring a chapter (with Aarti Goel and Yashieta Chauhan, JIIT) for the edited volume Artificial Intelligence and Machine Learning for Intelligent Transportation Systems, to be published by Scrivener Publishing / Wiley (Scopus-indexed). The chapter covers how reinforcement learning is applied to traffic flow prediction, adaptive signal control, and pattern recognition in intelligent transportation systems.",
+        "Co-authoring a chapter (with Dr. Aarti Goel and Yashieta Chauhan, JIIT) for the edited volume Artificial Intelligence and Machine Learning for Intelligent Transportation Systems, to be published by Scrivener Publishing / Wiley (Scopus-indexed). The chapter covers how reinforcement learning is applied to traffic flow prediction, adaptive signal control, and pattern recognition in intelligent transportation systems.",
       status: "Writing",
       tech: ["Research", "Reinforcement Learning", "Academic Writing"],
       github: null,

@@ -42,10 +42,12 @@ itself is original.
 
 ## Cache-busting
 
-`index.html` loads `styles.css`, `data.js`, `script.js`, and `cat.js` with a
-manual `?v=YYYYMMDDx` query string. Bump the version on whichever file(s) you
-change — otherwise browsers (including your own local preview) will keep
-serving the previously cached copy instead of your edit.
+`index.html` loads `styles.css`, `data.js`, `script.js`, `cat.js`, and every
+`resume.pdf` link with a manual `?v=YYYYMMDDx` query string. Bump the version
+on whichever file you change — otherwise browsers (including your own local
+preview) will keep serving the previously cached copy instead of your edit.
+This bit us for real once already with a stale `data.js`, so it's worth
+remembering whenever you swap in a new resume, not just for code changes.
 
 ## Running locally
 
