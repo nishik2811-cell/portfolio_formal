@@ -14,13 +14,13 @@ const PORTFOLIO_DATA = {
       institution: "Rahul International School, Mira Road",
       degree: "Senior Secondary (Class XII)",
       score: "84.2%",
-      period: "",
+      period: "2024 — 2025",
     },
     {
       institution: "Delhi Public School, Indirapuram",
       degree: "Secondary (Class X)",
       score: "96.2%",
-      period: "",
+      period: "2022 — 2023",
     },
   ],
 
@@ -132,13 +132,13 @@ const PORTFOLIO_DATA = {
 
   experience: [
     {
-      role: "Active Tech & Volunteer",
+      role: "Active Technical and Management Volunteer",
       org: "AIML Hub of JIIT",
       period: "2026 — Present",
       description: "",
     },
     {
-      role: "Active Tech & Volunteer",
+      role: "Active Technical and Management Volunteer",
       org: "DICE Hub of JIIT",
       period: "2026 — Present",
       description: "",

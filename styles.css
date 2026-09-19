@@ -2332,6 +2332,18 @@ button:focus-visible {
     display: none;
   }
 
+  /* --l1 and --r1 are both "top tier" ledges (21vh/28vh on desktop, only
+     7vh apart) — fine when 4 other ledges fill the rest of the height, but
+     with just these two left on a phone that reads as one cramped cluster
+     near the top. Spread them across the full height instead. */
+  .platform--l1 {
+    top: 16vh;
+  }
+
+  .platform--r1 {
+    top: 64vh;
+  }
+
   .hills {
     height: 12vh;
     min-height: 90px;
