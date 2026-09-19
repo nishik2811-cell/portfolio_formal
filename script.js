@@ -50,6 +50,7 @@ function renderProjects() {
     .map(
       (p, i) => `
       <article class="project reveal" style="--stagger-index: ${i}">
+        ${p.image ? `<img class="project__image" src="${p.image}" alt="${p.name} screenshot" loading="lazy" />` : ""}
         <div class="project__head">
           <span class="project__index" aria-hidden="true">Project 0${i + 1}</span>
         </div>
@@ -79,6 +80,7 @@ function renderCurrent() {
     .map(
       (c, i) => `
       <div class="current__item reveal" style="--stagger-index: ${i}">
+        ${c.image ? `<img class="current__image" src="${c.image}" alt="${c.title} screenshot" loading="lazy" />` : ""}
         <div class="current__item-head">
           <span class="current__number">${c.number}</span>
           <span class="current__status">${c.status}</span>
@@ -86,6 +88,16 @@ function renderCurrent() {
         <h3 class="current__title">${c.title}</h3>
         <span class="current__category">${c.category}</span>
         <p class="current__desc">${c.description}</p>
+        ${
+          c.tech && c.tech.length
+            ? `<ul class="project__tech">${c.tech.map((t) => `<li>${t}</li>`).join("")}</ul>`
+            : ""
+        }
+        ${
+          c.github
+            ? `<div class="project__links"><a href="${c.github}" target="_blank" rel="noopener">Code <span>→</span></a></div>`
+            : ""
+        }
       </div>`
     )
     .join("");

@@ -5,48 +5,70 @@
 const PORTFOLIO_DATA = {
   education: [
     {
-      institution: "Jaypee Institute of Information Technology",
+      institution: "Jaypee Institute of Information Technology, Noida",
       degree: "B.Tech — Mathematics & Computing",
-      score: "CGPA: XX / 10",
-      period: "2024 — Present",
+      score: "CGPA: 9.11",
+      period: "2025 — 2029",
     },
     {
-      institution: "Your School Name",
-      degree: "Senior Secondary",
-      score: "XX%",
-      period: "20XX",
+      institution: "Rahul International School, Mira Road",
+      degree: "Senior Secondary (Class XII)",
+      score: "96.2%",
+      period: "",
+    },
+    {
+      institution: "Delhi Public School, Indirapuram",
+      degree: "Secondary (Class X)",
+      score: "84.2%",
+      period: "",
     },
   ],
 
   techStack: [
     {
-      category: "Languages",
+      category: "Programming Languages",
       items: [
-        { name: "C++", note: "Systems / DSA" },
-        { name: "C", note: "Systems" },
-        { name: "Java", note: "OOP" },
-        { name: "JavaScript", note: "Web" },
-        { name: "HTML", note: "Markup" },
-        { name: "CSS", note: "Styling" },
+        { name: "C", note: "" },
+        { name: "C++", note: "" },
+        { name: "Python", note: "" },
+        { name: "Java", note: "" },
       ],
     },
     {
-      category: "AI / ML",
+      category: "Frontend",
       items: [
-        { name: "Machine Learning", note: "Modeling" },
-        { name: "Data Analysis", note: "Insights" },
-        { name: "Pandas", note: "Data wrangling" },
-        { name: "NumPy", note: "Numerical computing" },
-        { name: "Scikit-learn", note: "ML" },
+        { name: "HTML", note: "" },
+        { name: "CSS", note: "" },
+        { name: "JavaScript", note: "" },
       ],
     },
     {
-      category: "Development",
+      category: "Data & Machine Learning",
       items: [
-        { name: "React", note: "Frontend" },
-        { name: "Node.js", note: "Backend" },
-        { name: "Git", note: "Version control" },
-        { name: "GitHub", note: "Collaboration" },
+        { name: "NumPy", note: "" },
+        { name: "Pandas", note: "" },
+        { name: "Matplotlib", note: "" },
+      ],
+    },
+    {
+      category: "Database",
+      items: [{ name: "MySQL", note: "" }],
+    },
+    {
+      category: "Development Tools",
+      items: [
+        { name: "Git", note: "" },
+        { name: "GitHub", note: "" },
+        { name: "VS Code", note: "" },
+        { name: "Vercel", note: "" },
+      ],
+    },
+    {
+      category: "Design",
+      items: [
+        { name: "Canva", note: "" },
+        { name: "Framer", note: "" },
+        { name: "Photoshop", note: "" },
       ],
     },
   ],
@@ -54,89 +76,80 @@ const PORTFOLIO_DATA = {
   projects: [
     {
       name: "ARGUS",
-      description: "Crime monitoring / risk analysis system.",
-      tech: [],
-      github: null,
+      description:
+        "An OOP-driven crime analysis system in C++ that manages and analyzes crime records, calculates risk scores, and surfaces trends across a dataset of 500 records spanning 20 Indian cities and three crime categories (violent, property, cyber). Built using STL containers, templates, inheritance, polymorphism, and exception handling.",
+      tech: ["C++", "OOP", "STL", "File I/O"],
+      github: "https://github.com/nishik2811-cell/ARGUS",
       demo: null,
+      image: "assets/argus-screenshot.png",
     },
     {
-      name: "AQI Predictor",
-      description: "Machine learning based air quality prediction.",
-      tech: ["Python", "Machine Learning"],
-      github: null,
+      name: "AQI Prediction",
+      description:
+        "A Python-based model that forecasts Delhi's Air Quality Index using two years of hourly pollutant data (CO, NO, NO2, SO2, O3, PM2.5, PM10, NH3) from monitoring stations, paired with an HTML interface for visualizing predictions and trends.",
+      tech: ["Python", "Data Analysis", "HTML"],
+      github: "https://github.com/nishik2811-cell/AQI_Prediction",
       demo: null,
-    },
-    {
-      name: "Sanchay",
-      description: "AI-driven citizen benefit and scheme discovery platform.",
-      tech: ["AI"],
-      github: null,
-      demo: null,
+      image: "assets/aqi-screenshot.png",
     },
   ],
 
   currentlyWorking: [
     {
       number: "01",
-      title: "Amrosia",
-      category: "AI × Nutrition",
+      title: "SkillSwap",
+      category: "Peer-to-Peer Skill Exchange Platform",
       description:
-        "An AI-powered nutrition and calorie tracking platform.",
+        "A prototype platform where users trade skills instead of money — pick to teach for pay, pay to learn, or swap skills with no money involved. Includes a matching algorithm that scores compatibility (0–100%) using skill alignment, availability, budget fit, and shared interests, plus a dashboard, searchable directory, and match rankings. Currently a client-side prototype (HTML/CSS/JS) running on mock data — auth, persistence, and real messaging are next.",
       status: "Building",
+      tech: ["HTML", "CSS", "JavaScript"],
+      github: "https://github.com/nishik2811-cell/SkillSwap",
+      image: "assets/skillswap-screenshot.png",
     },
     {
       number: "02",
-      title: "Sanchay",
-      category: "AI × GovTech",
+      title: "Book Chapter — Reinforcement Learning for Traffic Control and Decision-Making",
+      category: "Research × Academic Writing",
       description:
-        "An AI-driven platform for discovering and understanding citizen benefits and government schemes.",
-      status: "Building",
+        "Co-authoring a chapter (with Aarti Goel and Yashieta Chauhan, JIIT) for the edited volume Artificial Intelligence and Machine Learning for Intelligent Transportation Systems, to be published by Scrivener Publishing / Wiley (Scopus-indexed). The chapter covers how reinforcement learning is applied to traffic flow prediction, adaptive signal control, and pattern recognition in intelligent transportation systems.",
+      status: "Writing",
+      tech: ["Research", "Reinforcement Learning", "Academic Writing"],
+      github: null,
+      image: null,
     },
     {
       number: "03",
       title: "DSA / C++",
       category: "Algorithms × Problem Solving",
       description:
-        "Currently strengthening data structures, algorithms and problem-solving skills.",
+        "Sharpening data structures & algorithms in C++ — daily problem-solving to stay competition- and interview-ready.",
       status: "Learning",
+      tech: [],
+      github: null,
+      image: null,
     },
   ],
 
   experience: [
     {
-      role: "Software Engineering Intern",
-      org: "Placeholder Company",
-      period: "2025",
+      role: "Active Technical & Management Volunteer",
+      org: "AIML Hub of JIIT",
+      period: "2026",
       description:
-        "Contributed to a production web application, working across the stack on features used by thousands of people.",
+        "Design, event management, and Point of Contact for the Scripting & Forms teams at Alumni Meet and Orientation.",
     },
     {
-      role: "Hackathon Finalist",
-      org: "Placeholder Hackathon",
-      period: "2024",
-      description:
-        "Built an AI-powered prototype in 36 hours with a small team, placing among the top finalists.",
-    },
-    {
-      role: "Core Member",
-      org: "University Tech Club",
-      period: "2023 — Present",
-      description:
-        "Organize workshops and mentor peers on web development and applied machine learning.",
-    },
-    {
-      role: "Volunteer",
-      org: "Placeholder Organization",
-      period: "2023",
-      description:
-        "Supported community outreach programs focused on technology education access.",
+      role: "Active Technical & Management Volunteer",
+      org: "DICE",
+      period: "2026",
+      description: "Technical and management support for DICE's volunteer team.",
     },
   ],
 
   contact: {
-    email: "hello@example.com",
-    github: "https://github.com/",
-    linkedin: "https://linkedin.com/in/",
+    email: "nishik2811@gmail.com",
+    github: "https://github.com/nishik2811-cell",
+    linkedin: "https://linkedin.com/in/nishita-kumari-841227240",
   },
 
   // Drop your real PDF in the project root at this path — nothing else

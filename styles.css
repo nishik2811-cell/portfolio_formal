@@ -1711,6 +1711,16 @@ a {
   opacity: 1;
 }
 
+.project__image {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  margin-bottom: 1.25rem;
+}
+
 .project__head {
   position: relative;
   z-index: 1;
@@ -1844,6 +1854,16 @@ a {
   background: rgba(5, 7, 13, 0.55);
   transform: translateY(-4px);
   box-shadow: 0 12px 36px -12px rgba(175, 199, 255, 0.3);
+}
+
+.current__image {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  margin-bottom: 0.5rem;
 }
 
 .current__item-head {
@@ -2342,9 +2362,14 @@ button:focus-visible {
 
 /* Mobile: keep the cat and just one ledge per side — a small sign of the
    world rather than a competing layer — and shrink the hills. cat.js reads
-   the same breakpoint to slow down how often it hops. */
+   the same breakpoint to slow down how often it hops.
+   --l3/--r3 are already hidden by the 860px query above (still in effect
+   here too, since this is a narrower max-width), so this only needs to drop
+   the second ledge on each side — l2/r2 — and must NOT also hide l1, or the
+   left side is left with zero visible ledges (l1 hidden here, l2 hidden
+   here, l3 hidden above) while the right keeps r1. With no ledge to land
+   on, cat.js's visiblePlatforms() had nothing left to jump the cat to. */
 @media (max-width: 640px) {
-  .platform--l1,
   .platform--l2,
   .platform--r2 {
     display: none;
