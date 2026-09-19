@@ -16,17 +16,29 @@ Projects, Work, Stack, Contact) scrolls through the middle.
 - `resume.pdf` — the file every "Resume" link/button on the site points to
 - `desksprite/` — local reference repo (ignored, not part of the site)
 
-## Editing content
+## The cat
 
-All real content (education, tech stack, projects, currently working on,
-experience, contact links) lives in `data.js` — edit it there; nothing else
-needs to change for text content.
+`cat.js` draws and animates the mascot living on the ledges. A few things
+it actually does:
 
-Project and currently-working cards render as a plain box, or as a whole
-clickable `<a>` card when the entry has a `github` and/or `demo` URL (see
-`renderProjects`/`renderCurrent` in `script.js`) — there's no separate "Code"
-link, the whole card is the link. Drop a screenshot in `assets/` and point
-an entry's `image` field at it to show it on the card.
+- **Wanders on its own** — idles, sits, sleeps, stretches, and grooms on a
+  randomized timer, then walks to a ledge edge and jumps to another one,
+  entirely decoupled from scrolling.
+- **Watches your cursor** — its eyes and head track the pointer continuously
+  on devices with a real mouse; occasionally, while idle or sitting, it'll
+  walk toward it.
+- **Click to pet** — click the cat and it closes its eyes and gives a happy
+  little tail curl and wag.
+- **Reacts to landing** — the ledge it lands on gives a small settle bounce
+  and its hanging vines sway.
+- **Respects `prefers-reduced-motion`** — the idle loop and cursor-tracking
+  both turn off for anyone who's asked for reduced motion.
+
+It's drawn as scalable canvas vector shapes rather than pixel-art frames, so
+it stays crisp at any size. The behavior state machine (idle/walk/jump/land
+loop, resize handling) is adapted from the open-source
+[desksprite](https://github.com/welltilln/desksprite) (MIT); the renderer
+itself is original.
 
 ## Cache-busting
 
