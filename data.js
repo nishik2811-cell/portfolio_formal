@@ -92,6 +92,15 @@ const PORTFOLIO_DATA = {
       demo: null,
       image: "assets/aqi-screenshot.png",
     },
+    {
+      name: "Freiren Portfolio",
+      description:
+        "An earlier personal portfolio design with a Freiren-inspired anime aesthetic — a dark, atmospheric hero built with plain HTML, CSS, and JavaScript.",
+      tech: ["HTML", "CSS", "JavaScript"],
+      github: null,
+      demo: "https://portfolio-ten-theta-92.vercel.app/",
+      image: "assets/portfolio-screenshot.png",
+    },
   ],
 
   currentlyWorking: [
