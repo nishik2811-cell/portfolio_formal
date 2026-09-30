@@ -74,6 +74,12 @@ locally, project settings on Vercel; Production and Preview):
 - `OLLAMA_API_KEY` — optional; sent as a Bearer token (needed if the host is
   behind an auth proxy or Ollama's hosted cloud)
 
+- `GITHUB_TOKEN` — optional; the `get_github_repos` tool calls GitHub's API
+  (cached 10 min). Anonymous calls are limited to ~60/hour per IP, so add a
+  read-only token if it starts failing
+
+The model can call `get_github_repos` (max 2 rounds per question), so `OLLAMA_MODEL` must support tool calling.
+
 Try it locally with `ollama pull llama3.2:3b` then `npx vercel dev`. The
 function caps history (6 messages), reply length (300 tokens), and requests
 (10/min per IP, per instance).
