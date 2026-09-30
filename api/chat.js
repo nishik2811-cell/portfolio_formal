@@ -107,7 +107,7 @@ About: Curious by nature; into music and a bit of clay modelling. Likes AI/ML, s
 
 Profile (JSON): ${profile}`;
 
-let model;
+let base, withTools;
 const hits = new Map();
 
 // ponytail: per-instance memory, resets on cold start. Use Upstash/KV if abused.
@@ -144,7 +144,7 @@ module.exports = async (req, res) => {
   if (!messages.length) return res.status(400).json({ reply: "Ask me something about Nishita's work!" });
 
   try {
-    model ||= new ChatOllama({
+    base ||= new ChatOllama({
       baseUrl: process.env.OLLAMA_BASE_URL || "http://localhost:11434",
       model: process.env.OLLAMA_MODEL || "llama3.2:3b",
       temperature: 0.3,
@@ -152,11 +152,15 @@ module.exports = async (req, res) => {
       headers: process.env.OLLAMA_API_KEY
         ? { Authorization: `Bearer ${process.env.OLLAMA_API_KEY}` }
         : undefined,
-    }).bindTools([getGithubRepos]);
+    });
+    withTools ||= base.bindTools([getGithubRepos]);
 
     const convo = [["system", SYSTEM], ...messages.map((m) => [m.role, m.content])];
-    let r = await model.invoke(convo);
-    for (let i = 0; i < MAX_TOOL_ROUNDS && r.tool_calls?.length; i++) {
+    let r;
+    // The final round has no tools bound, so the model must answer in text.
+    for (let i = 0; ; i++) {
+      r = await (i < MAX_TOOL_ROUNDS ? withTools : base).invoke(convo);
+      if (i >= MAX_TOOL_ROUNDS || !r.tool_calls?.length) break;
       convo.push(r);
       for (const call of r.tool_calls) {
         convo.push(
@@ -165,7 +169,6 @@ module.exports = async (req, res) => {
             : new ToolMessage({ content: "Unknown tool.", tool_call_id: call.id })
         );
       }
-      r = await model.invoke(convo);
     }
     return res.status(200).json({
       reply: r.text || "I couldn't put that together. You can email Nishita at nishik2811@gmail.com.",

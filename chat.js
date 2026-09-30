@@ -89,7 +89,7 @@
 
     let reply = FALLBACK;
     const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), 20000);
+    const timer = setTimeout(() => ctrl.abort(), 65000);
     try {
       const res = await fetch("/api/chat", {
         method: "POST",
