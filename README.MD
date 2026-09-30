@@ -12,6 +12,8 @@ Projects, Work, Stack, Contact) scrolls through the middle.
 - `data.js` — portfolio content (education, tech stack, projects, experience, contact links) as one editable data object
 - `script.js` — scroll/reveal behavior, nav, and rendering `data.js` into the page
 - `cat.js` — the cat mascot: movement, ledge-hopping, and its animations
+- `chat.js` — floating chatbot widget (button + panel), talks to `/api/chat`
+- `api/chat.js` — Vercel serverless function: LangChain.js + Ollama, answers from `data.js`
 - `assets/` — project screenshots referenced from `data.js` (`image` field on each project/currently-working entry)
 - `resume.pdf` — the file every "Resume" link/button on the site points to
 - `desksprite/` — local reference repo (ignored, not part of the site)
@@ -57,4 +59,21 @@ No build tools required. Serve the folder with any static server, e.g.:
 python -m http.server 8000
 ```
 
-then open `http://localhost:8000`.
+then open `http://localhost:8000`. The chatbot won't answer there (no `/api`);
+it shows a fallback message instead.
+
+## Chatbot
+
+`api/chat.js` runs on Vercel and talks to an Ollama server through LangChain's
+`ChatOllama`. Configure it with environment variables (a gitignored `.env`
+locally, project settings on Vercel; Production and Preview):
+
+- `OLLAMA_BASE_URL` — default `http://localhost:11434`; on Vercel it must be a
+  public HTTPS address of your hosted Ollama
+- `OLLAMA_MODEL` — default `llama3.2:3b`
+- `OLLAMA_API_KEY` — optional; sent as a Bearer token (needed if the host is
+  behind an auth proxy or Ollama's hosted cloud)
+
+Try it locally with `ollama pull llama3.2:3b` then `npx vercel dev`. The
+function caps history (6 messages), reply length (300 tokens), and requests
+(10/min per IP, per instance).

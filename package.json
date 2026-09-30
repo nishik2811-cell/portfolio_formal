@@ -1,0 +1,9 @@
+{
+  "name": "portfolio-formal",
+  "private": true,
+  "description": "Static portfolio; deps are only for the /api/chat serverless function.",
+  "dependencies": {
+    "@langchain/core": "^1.0.0",
+    "@langchain/ollama": "^1.0.0"
+  }
+}

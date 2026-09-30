@@ -155,3 +155,5 @@ const PORTFOLIO_DATA = {
   // needs to change. Every "Resume" link/button on the site points here.
   resumeUrl: "resume.pdf",
 };
+
+if (typeof module !== "undefined") module.exports = PORTFOLIO_DATA;
